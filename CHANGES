@@ -1,6 +1,12 @@
 * seppadm: chdir to / when switching user since the original directory
   may not be readable (eg /root)
 
+2007-07-12
+----------
+* released 1.5.0
+* addded SEPP::OSDetector and code cleanup for OS detection
+* added seppadm license-expose functionality for known sepp-get customers
+
 2006-05-01
 ----------
 * released 1.4.2

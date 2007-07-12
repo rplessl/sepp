@@ -1,5 +1,5 @@
 ### helper library for building software packages
-### $Id: INSTALL.lib 260 2007-05-03 12:44:32Z hackerj $
+### $Id: INSTALL.lib 243 2006-05-09 06:45:07Z oetiker $
 ###
 ### * this is part of SEPP
 ### * it looks like bourn shell but it is BASH !
@@ -24,13 +24,26 @@ fi
 
 OS=`uname`
 
+PACK=${PROD}-${VERSION}-${PACKAGER}
+
+if [ x$PROD = x ]; then
+ echo PROD not defined
+ exit 1
+fi
+
+if [ x$VERSION = x ]; then 
+ echo VERSION not defined 
+ exit 1
+fi
+
+if [ x$PACKAGER = x ]; then
+ echo PACKAGER not defined 
+ exit 1
+fi
+
+
 if [ $OS = SunOS ]; then
-	OSREL=`/bin/uname -r`
-        if [ $OSREL = "5.10" ]; then
-                ARCH="sun4u-sun-solaris2.10"
-	else
-                ARCH="sun4u-sun-solaris2.8"
-        fi
+        ARCH=`seppadm environment $PACK | grep ARCH | cut -f2 -d'='`
         R="-R"
         XINC=/usr/openwin/include
         XLIB=/usr/openwin/lib
@@ -39,10 +52,9 @@ if [ $OS = SunOS ]; then
         LDFLAG_AS_NEEDED=""
         export GNUMAKE
 elif [ $OS = Darwin ]; then
+        ARCH=`seppadm environment $PACK | grep ARCH | cut -f2 -d'='`
         # Mac doesn't know -R --> use another -L instead
         R="-L"
-        CPU=`uname -p`
-        ARCH=${CPU}-apple-darwin7.4.1
         XINC=/usr/X11R6/include
         XLIB=/usr/X11R6/lib
         LDFLAG_AS_NEEDED=""
@@ -59,25 +71,18 @@ elif [ $OS = Darwin ]; then
              make "$@"
         }
 else
-        if [ ! -f /etc/debian_version ]; then
-                echo "ERROR: this isn't Debian?"
-                exit 1
-        fi
-        DEBIAN=`cat /etc/debian_version`
-        CPU=`uname -m`
-        if [ $CPU = x86_64 ]; then
-                ARCH=amd64-debian-linux$DEBIAN
-        else
-                ARCH=i686-debian-linux$DEBIAN
-        fi
+        ARCH=`seppadm environment $PACK | grep ARCH | cut -f2 -d'='`
         R="-Wl,-rpath -Wl,"
-        XINC=/usr/X11R6/include
-        XLIB=/usr/X11R6/lib
-        if [ $DEBIAN = "3.0" ]; then
-                LDFLAG_AS_NEEDED=""
-        else
-                LDFLAG_AS_NEEDED="-Wl,--as-needed"
+        XINC=/usr/include
+        XLIB=/usr/lib
+        if [ -f /etc/debian_version ]; then
+            DEBIAN=`cat /etc/debian_version`
+            if [ $DEBIAN = "3.1" ]; then
+               XINC=/usr/X11R6/include
+               XLIB=/usr/X11R6/lib
+            fi
         fi
+        LDFLAG_AS_NEEDED="-Wl,--as-needed"
 
         function gcp () {
              cp "$@"
@@ -93,22 +98,10 @@ else
         }
 fi
 
-PACK=${PROD}-${VERSION}-${PACKAGER}
-
-if [ x$PROD = x ]; then
- echo PROD not defined 
- exit 1
-fi
-
-if [ x$VERSION = x ]; then
- echo VERSION not defined 
- exit 1
-fi
-
-if [ x$PACKAGER = x ]; then
- echo PACKAGER not defined 
- exit 1
-fi
+PREFIX=${PREFIX:-`seppadm environment $PACK  | grep -m1 PREFIX | cut -f2 -d'='`}
+EPREFIX=${EPREFIX:-`seppadm environment $PACK | grep EPREFIX | cut -f2 -d'='`} 
+VPREFIX=${VPREFIX:-`seppadm environment $PACK | grep VPREFIX | cut -f2 -d'='`}
+WORKDIR=${WORKDIR:-`seppadm environment $PACK | grep WORKDIR | cut -f2 -d'='`}
 
 PREFIX=${PREFIX:-/usr/pack/$PACK}
 EPREFIX=${EPREFIX:-$PREFIX/$ARCH}
@@ -331,12 +324,11 @@ function kdemake (){
 function perlmodule (){
  path=$1;shift
  if [ "${path##*/}" = "${path}" ]; then
- 	cd $WORKDIR
- 	if [ ! -f 02packages.details.txt ]; then
-		wget --quiet --timestamping ftp://sunsite.cnlab-switch.ch/mirror/CPAN/modules/02packages.details.txt.gz 
-		gunzip 02packages.details.txt.gz
+	wget --quiet --timestamping ftp://sunsite.cnlab-switch.ch/mirror/CPAN/modules/02packages.details.txt.gz 
+	if [ 02packages.details.txt.gz -nt 02packages.details.txt ]; then
+		gunzip -c 02packages.details.txt.gz > 02packages.details.txt
 	fi
-	temp=$(ggrep "^$path " 02packages.details.txt|head -1)
+	temp=$(grep "^$path " 02packages.details.txt|head -1)
 	temp="${temp##* }"
 	pack="${temp##*/}"
 	path=http://cpan.mirror.solnet.ch/authors/id/"${temp%/*}"
@@ -393,7 +385,7 @@ function kde314_3rdparty () {
         --with-qt-libraries=${KPFX}/${ARCH}/lib \
         --with-qt-includes=${KPFX}/include $3 $4 $5 $6 $7 $8 $9
   cat <<START >$PREFIX/SEPP/start.pl
-my %os = ( 'solaris' => 'sun4u-sun-solaris2.8',
+my %os = ( 'solaris' => 'sun4u-sun-solaris2.9',
            'linux' => 'i686-debian-linux3.0' );
 PreENV 'PATH', "$KPFX/\$os{\$^O}/bin";
 SetENV 'KDEDIRS', "\$PackDir/$os{$^O}:\$PackDir:$KPFX/\$os{\$^O}";

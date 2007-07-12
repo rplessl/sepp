@@ -84,6 +84,7 @@ multimedia
 fun
 text
 office
+cad
 #
 *** binaries ***
 # list of binaries provided by the package. The file name part
@@ -120,7 +121,9 @@ html
 # packages mentioned in this section are also installed on the
 # local system. Package dependencies should be prevented
 # whenever possible.
-miracles-1.45.2-ak
+# miracles-1.45.2-ak 
+# testpack-1.0-rp    : i686-debian-linux3.1
+# anotherpack-1.0-rp : amd64-debian-linux3.1, i686-debian-linux3.1 
 #
 *** alarm ***
 # the alarm feature (not implemented) will make sepp send a

@@ -50,34 +50,13 @@
 # AppExec just logs the fact that the application is going to
 # be started.
 
-if($^O eq 'solaris') {
-	chomp($osrel=`/bin/uname -r`);
-	if($osrel eq '5.10') {
-        	$os = 'sun4u-sun-solaris2.10';
-	} else {
-        	$os = 'sun4u-sun-solaris2.8';
-	}
+my $os = SEPP::OSDetector::
+
+if($^O eq 'linux') {
+    if ($os =~ m/ia32/) {
+        SetENV "GCONV_PATH", "/emul/ia32-linux/usr/lib/gconv";
+	SetENV "XLOCALEDIR", "/emul/ia32-linux/usr/X11R6/lib/X11/locale";
+    }
 }
-elsif($^O eq 'darwin') {
-	chomp($plat=`/bin/uname -p`);
-        $os = $plat.'-apple-darwin7.4.1';
-}
-elsif($^O eq 'linux') {
-        chomp($uname=`/bin/uname -m`);
-	if($uname eq 'i686') {
-		$os = "i686-debian-linux3.1";
-	}
-        if($uname eq 'x86_64') {
-		if(-d "$PackDir/amd64-debian-linux3.1") {
-			# native 64-bit version
-			$os="amd64-debian-linux3.1";
-		}
-		else {
-			# emulated 32-bit
-			$os = "i686-debian-linux3.1";
-			SetENV "GCONV_PATH", "/emul/ia32-linux/usr/lib/gconv";
-			SetENV "XLOCALEDIR", "/emul/ia32-linux/usr/X11R6/lib/X11/locale";
-		}
-	}
-}
+
 AppRun "$PackDir/$os/bin";

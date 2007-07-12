@@ -8,12 +8,13 @@
 # * 30.3.2003 to added support for host(3):/usr/lunghin/pk1/pack/&
 #                by just killing the (3) bit
 # * 03.1.2006 ds added support for solaris
+# * 03.1.2007 rp added support for different local/sepp usernames
 
 $ENV{PATH}="/usr/bin";
 my $key = $ARGV[0];
 ##############################################################
 # if there is a  file called
-# /scratch/pack/$key/mount and it belongs to user local
+# /scratch/pack/$key/mount and it belongs to user >#>user_name<#<
 # we mount this into 
 # /usr/pack/$key
 # this is great for building sepp packages
@@ -29,7 +30,7 @@ if (open X, "/etc/mtab"){
 }
 close X;
 if ( -r $build 
-        and (stat $build)[4] == (getpwnam 'local')[2] ){
+        and (stat $build)[4] == (getpwnam '>#>user_name<#<')[2] ){
 	if($^O eq 'linux') {
 		print "-fstype=none,bind :/scratch/pack/$key\n";
 	}
