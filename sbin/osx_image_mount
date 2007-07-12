@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/sudo /usr/sepp/sbin/osx_image_mount_root $1 $2

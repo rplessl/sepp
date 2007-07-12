@@ -1,0 +1,11 @@
+*** global ***
+seppadm_user = sepp
+local_support = Whoever Dos <support@example.com>
+
+# if you run a multi-arch setup you may want to drop the following or add
+# all the architectures you have to the include line
+exclude = *
+include = i686*linux
+
+*** http://computing.ee.ethz.ch/sepp/pack ***
+# check the sepprsync manpage for details

@@ -1,0 +1,70 @@
+###############################################################
+# Main configuration file for the SEPP installation
+# It is read by seppadm
+# EXAMPLE for Standalone System
+###############################################################
+
+*** perl interpreter ***
+# path to perl interpreter used in stubs
+# you normally don't have to change this
+
+/usr/sepp/sbin/perl
+
+*** local server ***
+# the name of the local sever and the path to the local
+# packlist. The packlist is a file which is maintained by the
+# seppadm tool. It contains information about all the packages
+# available on this server.
+#
+# AFS/DFS : If your packs live on the AFS/DFS server put 'localhost'
+#      as your local server.
+
+localhost	/usr/sepp/SEPP.packlist
+
+*** remote server ***
+*** preferred operating system ***
+# seppadm will only let you install packages which are
+# available for the OS configured on this line.
+linux
+
+*** sepp user ***
+# seppadm will only run as this user. If you run seppadm as root, 
+# it will try to become this user. It is sensible NOT run run seppadm
+# as root. And this runeable ensures this ...
+
+# If you do nor relay on uids for package instalation, please set your
+# user to 'IGNORE' this will turn the related seppadm features off
+
+seppadm
+
+*** sepp disks ***
+# when preparing a package, seppadm tool will automatically
+# pick one of the disks listed below, choosing the one with the
+# most space available.
+
+/usr/pack
+*** compile shell ***
+# The application preparation environment is configured to use
+# tcsh but for strong minded people this can be configured
+# here.
+/usr/bin/tcsh
+
+*** compile env ***
+# these lines define the environment variables which will be
+# set when the compile shell is started. In the example below
+# the HOME variable gets set to /usr/sepp/conf where a .cshrc
+# file is located which will be sourced when the shell starts.
+#
+# The lines below may contain special keywords in curly braces.
+# these will be replaced by their real values when seppadm
+# starts the shell. {SEPP} = /usr/sepp, {PATH} = $PATH, 
+# {HOME} = $HOME, {PACK} = app-vers-maint
+
+OPATH=/usr/bin:/bin:/usr/ccs/bin:/usr/openwin/bin:/usr/sbin:\
+      /usr/sepp/bin:/usr/sepp/sbin:{PATH}
+ORPATH = /usr/lib:/usr/openwin/lib
+OHOME={HOME}
+HOME={SEPP}/conf
+PACK={PACK}
+
+###############################################################

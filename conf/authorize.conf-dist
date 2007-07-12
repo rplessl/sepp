@@ -1,0 +1,20 @@
+*** system ***
+
+model = hard   # soft:  only produces a warning, can continue to evaluate
+               # hard:  can't start if not licensed
+               # crypt: like hard, but the software is encrypted
+
+*** allow ***
++ allow everyone as default
+
+
+*** continue ***
+
+
+*** abort text ***
+The application you have started is not allowed to run on your machine.
+
+*** continue text ***
+The application you have started is not allowed to run.
+You can continue and evaluate the application by pressing OK.
+

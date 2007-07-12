@@ -1,0 +1,59 @@
+## REMOVE THIS LINE WHEN YOU HAVE EDITED THIS FILE ####################
+## $Id: INSTALL 261 2007-07-06 12:52:47Z hackerj $
+#!/bin/bash
+PACKAGER=mo
+VERSION=3.1
+PROD=gawk
+
+. `dirname $0`/INSTALL.lib
+
+## set the compiler and PATH
+if [ -e /etc/debian_version -o $OS = Darwin ]; then 
+   # we use the debian compiler (3.3)
+   export CC=gcc CXX=g++ F77=g77
+   export PATH=/usr/bin:${PATH}
+else
+   OSREL=`/bin/uname -r`
+   if [ $OSREL = "5.10" ]; then
+   	   # use sfw gcc on solaris 10
+	   export CC=gcc CXX=g++ F77=g77
+	   export PATH=/usr/bin:/usr/sfw/bin:/usr/ccs/bin:${PATH}
+   else
+	   # there is no native gcc compiler 
+	   v=3.4.3
+	   export CC=gcc-$v CXX=g++-$v F77=g77-$v
+	   path_gcc=`$CC --seppdebug 2>&1 | grep Path: | awk '{print $2}'`
+	   export PATH=`dirname $path_gcc`:${PATH}
+   fi
+fi
+
+# only link the needed libs (-Wl,--as-needed on platforms that support it)
+[ -n "$LDFLAG_AS_NEEDED" ] && export LDFLAGS=$LDFLAG_AS_NEEDED
+
+## you can supply a patch ... relative to the unpacked archives root directory
+## use gdiff -u to build the patch
+echo ---------------------------------
+echo Compilers $CC $CXX $F77
+echo --------------------------------- 
+
+cat <<'PATCH' >$WORKDIR/patch
+--- one.orig    Fri Mar 19 12:49:05 2004
++++ one Fri Mar 19 12:48:56 2004
+@@ -1 +1 @@
+-Hellop
++Hello
+PATCH
+# for debian patches *.diff.gz
+debpatch http://security.ubuntu.com/ubuntu/pool/main/z/zip zip_2.30-6ubuntu0.1.diff.gz
+
+simplebuild http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz   --with-fun-option --disable-gugus
+
+
+## build a perl module
+perlmodule http://www.cpan.org/modules/by-module/DBD/ DBD-Pg-1.22.tar.gz
+
+## just fetch and  unpack
+if prepare http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz
+then
+  # do something, starting in the unpacked softwares root dir
+fi

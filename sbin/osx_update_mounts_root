@@ -1,0 +1,107 @@
+#!/usr/sepp/sbin/perl -T
+#
+# For MacOSX: Allow local mounts for installation
+# (Similar to programmed mount concept for linux)
+#
+#  CAN ONLY BE RUN WITH ROOT RIGHTS!!
+#
+# $Id: osx_update_mounts_root 177 2006-01-23 13:39:19Z aschults $
+#
+use strict;
+
+$ENV{PATH}="/usr/bin";
+
+# Then... Take the map and 
+my $src_map="/usr/sepp/conf/autosepp_indirect";
+# ... copy it to the local map, modifying the apropriate lines
+# i.e. (if /scractch/pack/<pagckage>/mount) exists
+my $dst_map="/var/sepp/autosepp_indirect.osx";
+
+my $options="rdirpls,-I=4096,-a=4,rsize=8192,wsize=8192,ro,resvport,timeo=15,retrans=10,mnttimeo=40,hard,tcp";
+
+
+my @lns=();
+if(open TAB,"<$dst_map")
+{
+  @lns=<TAB>;
+  close TAB;
+}
+
+map {chomp} @lns;
+my %chklns;
+@chklns{@lns}=();
+my $missing_lines=0;
+my $verbose=0;
+
+open X, "<$src_map" or exit 1;
+
+if($ARGV[0] eq "--stdout")
+    {
+	open Y,">-" or exit 1;
+    }
+else
+    {
+	open Y, ">$dst_map" or exit 1;
+    }
+
+while (<X>)
+  {
+    chomp;
+    die "Bad entry in $src_map: $_" unless m/^(\S+)\s+(.*)$/;
+    my $pkg=$1;
+    my @sources= split /\s+/,$2;
+    map { s/\&/$pkg/g } @sources;
+
+    #@sources=grep { ! /^localhost/ } @sources;
+    warn "No suitable package sources found for $pkg" if $#sources==-1;
+    
+    my @sources_pref=grep { ! /^drwho/ } @sources;
+    my $src=@sources[0];
+    
+
+    chomp;
+    # We only want to know about the package name
+    m{^\s*(\S+)\s+} || exit 1;
+    my $pkg=$1;
+    my $build = "/scratch/pack/$pkg/mount";
+    my $map_line;
+    
+    # File "mount" exists --> local mount.
+    if ( -r $build and (stat $build)[4] == (getpwnam 'local')[2] )
+      {
+	$map_line="$pkg rw localhost:/scratch/pack/$pkg";
+      }
+    # Otherwise take the original line.
+    else
+      {
+	$map_line="$pkg $options $src";
+      }
+    print Y "$map_line\n";
+    
+    if(exists $chklns{$map_line})
+    {
+      delete $chklns{$map_line};
+    }
+    else
+    {
+      $missing_lines++;
+      print "Missing Entry: $map_line\n" if $verbose;
+    }
+
+  }
+
+close Y;
+
+unless($missing_lines or %chklns)
+{
+  print "No changed due --> Exit\n" if $verbose;
+  exit;
+}
+
+
+# Make sure to kick the automounter behind /usr/pack, so the new map
+# is read, but allow skipping the reload (for StartupItem Automounter)
+unless($ARGV[0])
+  {
+    system("/System/Library/StartupItems/Automounter/Automounter reload sepp");
+  }

@@ -1,0 +1,36 @@
+#!/usr/bin/perl -T
+use strict;
+
+# just to make sure that we actually deal with a package name.
+
+die "USAGE: osx_local_start_local <Sepp-Package> <ARG1>..."
+  unless $ARGV[0] =~ m|^([-_a-z0-9]+)-([_\.a-z0-9]*\d[_\.a-z0-9]*)-([a-z]+)$| ;
+
+our $Pack="$1-$2-$3";
+
+shift @ARGV;
+
+my $perlpath="/usr/pack/$Pack/SEPP/local_start.pl";
+
+$ENV{PATH}="/bin:/usr/bin";
+
+die "ERROR: File does not exist: $perlpath" 
+    unless -f $perlpath;
+
+die "ERROR: File group/other writable: $perlpath" 
+    if ((stat $perlpath)[2] & 0022);
+
+die "ERROR: File not executable: $perlpath" 
+    unless -x $perlpath;
+
+die "ERROR: not owned by local user: $perlpath"
+    unless (stat $perlpath)[4] == (getpwnam 'local')[2];
+
+
+my $rv = do $perlpath;
+#my $rv = system $perlpath,$Pack,@ARGV;
+
+die "ERROR: Could not parse $perlpath: $@" if $@;
+die "ERROR: Could not read $perlpath: $!" unless defined $rv;
+
+exit $rv;
