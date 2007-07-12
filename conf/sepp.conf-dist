@@ -70,6 +70,26 @@ local
 # here.
 /usr/sepp/sbin/tcsh
 
+*** pathes and variables ***
+# This option allows to set the SEPP installation to other pathes
+# than /usr/pack/ and /usr/sepp/, which can be used for SEPP 
+# installations as user.
+#
+# CAUTION: CHANGING THIS VARIABLES TO OTHER DIRECTORIES THAN
+# THE DEFAULT WILL/MAY BREAK THE EXCHANGE OF SEPP PACKAGES WITH
+# OTHER SEPP USERS! ALL SOFTWARE MUST BE RECOMPILED ...
+
+PACK_PATH=/usr/pack
+SEPP_PATH=/usr/sepp
+BUILD_PATH=/scratch/pack
+
+PREFIX=/usr/pack/{PACK}
+EPREFIX=/usr/pack/{PACK}/{ARCH}
+VPREFIX=/usr/sepp/var/{PACK}
+WORKDIR=/scratch/build/{PACK}
+
+ARCH={ARCH}
+
 *** compile env ***
 # these lines define the environment variables which will be
 # set when the compile shell is started. In the example below
