@@ -22,6 +22,8 @@ B<seppadm> I<OPT> B<mirrorupdate>
 
 B<seppadm> I<OPT> B<expose> I<package>
 
+B<seppadm> I<OPT> B<license-expose> I<package>
+
 B<seppadm> I<OPT> B<report> [B<--datesort>] [B<--showremoved>]
 
 B<seppadm> I<OPT> B<webbuild> [B<--localonly>] [B<--all>]
@@ -161,14 +163,26 @@ Verifies that all local mirrors are up to date.
 
 =item B<expose> I<package>
 
-If a package has the license type 'world', this function will expose the
-whole package on the sepp package website by creating tar.bz2 archives in
-the SEPP/pub directory of the package. If there are recognizable
-architecture subdirectories in the package root, separate archives will be
-generated for each architecture. The F<SEPP/pub> directory will be symlinked
-from F</usr/sepp/html/pack/>I<package>. A list of all published packages is
-maintained in F</usr/sepp/html/pack/index.txt>. Use the B<sepp-get>
+If a package has the license type 'world', this function will expose the 
+whole package on the sepp package website by creating tar.bz2 archives 
+in the SEPP/pub directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The F<SEPP/pub> directory will be symlinked 
+from F</usr/sepp/html/pack/>I<package>. A list of all published packages 
+is maintained in F</usr/sepp/html/pack/index.txt>. Use the B<sepp-get> 
 application to download exposed sepp packages from one site to another.
+
+=item B<license-expose> I<package>
+
+If a package has the license type 'site', this function will expose 
+the whole package on the sepp package website by creating tar.bz2 archives 
+in the F<SEPP/lic-pack> directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The F<SEPP/lic-pack> directory will 
+be symlinked  from F</usr/sepp/html/lic-pack/>I<package>. A list of all 
+published packages is maintained in F</usr/sepp/html/lic-pack/index.txt>. 
+Use the B<sepp-get> application to download exposed sepp packages from one 
+site to another.
 
 =item B<report>  [B<--datesort>] [B<--showremoved>]
 
@@ -246,6 +260,7 @@ my %platform_triplets = (
     'sun4u-sun-solaris2.8'      => { OS => 'solaris' },
     'i686-debian-linux3.1'      => { OS => 'linux' },
     'amd64-debian-linux3.1'     => { OS => 'linux' },
+    'ia32-linux-ubuntu6.10'     => { OS => 'linux' },
     'powerpc-apple-darwin7.4.1' => { OS => 'darwin' },
 );
 
@@ -501,6 +516,7 @@ sub Mirror ($$);             # Expects ParsePacklists as argument
 sub MirrorUpdate ();
 sub UnExpose ($);
 sub Expose ($);
+sub LicExpose ($);
 sub Report ();
 sub Webbuild ();
 sub prefix_bundle ();
@@ -630,6 +646,9 @@ sub Main ()
   } elsif ($FUNC eq 'expose') {
     ChangeToSepp;
     Expose($ARGV[0])
+  } elsif ($FUNC eq 'license-expose') {
+    ChangeToSepp;
+    LicExpose($ARGV[0])
   } elsif ($FUNC eq 'report') {
     CheckOpts qw(datesort showremoved);
     Report
@@ -1114,33 +1133,38 @@ sub UnExpose ($) {
     Unlock();
 }
 
-sub TarPack ($){
+sub TarPack ($$){
     my $pack = shift;
-    my $archpat = '(?:amd64|i686|sun4u|powerpc)-\S+-\S+';
+    my $pub = shift;
+    my $archpat = '(?:amd64|i686|ia32|sun4u|powerpc)-\S+-\S+';
     opendir DIR, $DIR{'pack'}."/$pack" or Error "Can't open $DIR{'pack'}/$pack $!";
     my @archs = grep {/^$archpat$/} readdir DIR;
     closedir DIR;
     my @excl;
-    if(not -d "$DIR{'pack'}/$pack/SEPP/pub") {
-	mkdir("$DIR{'pack'}/$pack/SEPP/pub",0755) or
-	    Error "Couldn't create $DIR{'pack'}/$pack/SEPP/pub $!";
+    if(not -d "$DIR{'pack'}/$pack/SEPP/$pub") {
+	mkdir("$DIR{'pack'}/$pack/SEPP/$pub",0755) or
+	    Error "Couldn't create $DIR{'pack'}/$pack/SEPP/$pub $!";
     }
     my $tar = '/usr/sepp/bin/gtar';
     Error "To Expose SEPP Packages $tar is required" unless -x $tar;
+    # the /./ syntax is necessary to make the thing work
+    # even when the pack-dir is a symlink
     foreach my $arch (@archs){
-	Info "Tarring $pack/$arch";
-	system $tar,"-jcf","$DIR{'pack'}/$pack/SEPP/pub/$arch.tar.bz2","-C$DIR{'pack'}","$pack/$arch";
-	Error "aborting tar failed ..." if $?;
-	push @excl, "--exclude=$pack/$arch";
+        Info "Tarring $pack/$arch";
+	    system $tar,"-jcf","$DIR{'pack'}/$pack/SEPP/$pub/$arch.tar.bz2","-C$DIR{'pack'}","$pack/$arch";
+	    Error "aborting tar failed ..." if $?;
+	    push @excl, "--exclude=$pack/./$arch";
     }
-    push @excl, "--exclude=$pack/SEPP/pub";
-    push @excl, "--exclude=$pack/SEPP/ORIGINAL";
+    push @excl, "--exclude=$pack/./SEPP/$pub";
+    push @excl, "--exclude=$pack/./SEPP/ORIGINAL";
     Info "Tarring remaining bits of $pack";
-    system $tar,"-C$DIR{'pack'}","-jcf","$DIR{'pack'}/$pack/SEPP/pub/common.tar.bz2",@excl,$pack;
+    system $tar,"-C$DIR{'pack'}","-jcf","$DIR{'pack'}/$pack/SEPP/$pub/common.tar.bz2",@excl,"$pack/.";
     Error "aborting tar failed ..." if $?;
     return ('common',@archs)
 }
 	
+
+
 sub Expose ($)
 {
     my $pack = shift;
@@ -1163,7 +1187,7 @@ sub Expose ($)
 	close HTACCESS;
 	Info "Wrote new $pubdir/.htaccess";
     }
-    my @tars = TarPack $pack;
+    my @tars = TarPack($pack,'pub');
      
     if(not -e "$pubdir/$pack") {
 	symlink "/usr/pack/$pack/SEPP/pub","$pubdir/$pack";
@@ -1179,6 +1203,56 @@ sub Expose ($)
     my $deps = join(" ", @deps) || "";
     $index->{$pack} = {
         pubtime => time, 
+        arch    => "@tars",
+        name    => $META->{'package name'}[0],
+        desc    => $META->{'one line description'}[0],
+        deps    => $deps,
+    };
+    SEPP::Index::index_write($index, "$pubdir/index.txt");
+
+    Unlock();
+}
+
+sub LicExpose ($)
+{
+    my $pack = shift;
+    my $pubdir = $DIR{"sepp"}."/html/lic-pack";
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+    my $META = ValidatePack $pack;
+    if(not $META->{'license'}[0] eq "site") {
+        Error "Cannot publish $pack unless its license is 'site'";
+    }
+    if(not -d "$pubdir") {
+        mkdir("$pubdir",0755) or
+            Error "Couldn't create $pubdir";
+        Info "Created directory $pubdir";
+    }
+    if(not -f "$pubdir/.htaccess") {
+        open (HTACCESS,">$pubdir/.htaccess") or
+            Error "Couldn't write $pubdir/.htaccess";
+        print HTACCESS "IndexIgnore *\n";
+        print HTACCESS "DirectoryIndex index.txt\n";
+        print HTACCESS "### ADD ACCESS JUST FOR CUSTOMERS ###\n";
+        close HTACCESS;
+        Info "Wrote new $pubdir/.htaccess";
+    }
+
+    my @tars = TarPack($pack,'lic-pack');
+
+    if(not -e "$pubdir/$pack") {
+        symlink "/usr/pack/$pack/SEPP/lic-pack","$pubdir/$pack";
+        Info "Linked $pubdir/$pack /usr/pack/$pack/SEPP/lic-pack";
+    }
+
+    LockExclusive();
+
+    Info "Rebuilding $pubdir/index.txt";
+    my $index = SEPP::Index::index_read("$pubdir/index.txt");
+    # remove any space in the definition of each dependency
+    my @deps = map { my $d = $_; $d =~ s/\s+//g; $d } @{$META->{'depends on'}};
+    my $deps = join(" ", @deps) || "";
+    $index->{$pack} = {
+        pubtime => time,
         arch    => "@tars",
         name    => $META->{'package name'}[0],
         desc    => $META->{'one line description'}[0],
@@ -1265,7 +1339,7 @@ sub Webbuild (){
         print "- Reading Packs: ",$tasksize--,"    \r";
         next if $localonly and not defined $$am{$pack}{$serv}; # skip non local packages
         next unless -x "$DIR{sepp}/stub/$pack"; #ignore things which are not yet installed
-	#next if -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE"; # ignore REMOVABLE packs
+	next if -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE"; # ignore REMOVABLE packs
 
         $pdb{$pack}{apppage} = $DIR{'sepp'}."/html/$pack.html";
         $pdb{$pack}{make_apppage} = 1;
@@ -1761,6 +1835,7 @@ USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
        seppadm mirror package [--force]
        seppadm mirrorupdate
        seppadm expose package
+       seppadm license-expose package
        seppadm report [--datesort] [--showremoved]
        seppadm webbuild [--localonly] [--all]
        seppadm prefix_bundle package pathname...
@@ -2036,8 +2111,8 @@ sub ReadMETA ( $ ) {
 
      'license' =>
      {'LC:one'=>0,
-      'must be one of limited, unlimited, free, world'
-      => 'm/^(?:limited|unlimited|free|world)$/'},
+      'must be one of limited, unlimited, free, world, site'
+      => 'm/^(?:limited|unlimited|free|world|site)$/'},
 
      'license contact' =>
      {'not in "Full Name <email@address.org> [phone]" format'
@@ -2050,7 +2125,7 @@ sub ReadMETA ( $ ) {
      'categories' =>
      {'LC:many'=>0,
       'not a known category'
-      => 'm/^(?:system|sci&eng|programming|internet|graphics|multimedia|fun|text|office)$/'},
+      => 'm/^(?:system|sci&eng|programming|internet|graphics|multimedia|fun|text|office|cad)$/'},
 
      'operating system' =>
      {'LC:many'=>0,
