@@ -1,0 +1,2567 @@
+#!/usr/sepp/sbin/perl -w
+
+use lib '/usr/sepp/sbin';
+use strict;
+use SEPP::Index;
+
+=head1 NAME
+
+seppadm - SEPP package administration tool
+
+=head1 SYNOPSIS
+
+B<seppadm> I<OPT> B<prepare> [I<pathname>/]I<package> [B<--shellonly>] [B<--noshell>]
+
+B<seppadm> I<OPT> B<install> I<package> [B<--default>] [B<--force>]
+
+B<seppadm> I<OPT> B<remove> I<package> [B<--final>] [B<--usrsepp>]
+
+B<seppadm> I<OPT> B<mirror> I<package> [B<--force>]
+
+B<seppadm> I<OPT> B<mirrorupdate>
+
+B<seppadm> I<OPT> B<expose> I<package>
+
+B<seppadm> I<OPT> B<report> [B<--datesort>] [B<--showremoved>]
+
+B<seppadm> I<OPT> B<webbuild> [B<--localonly>] [B<--all>]
+
+B<seppadm> I<OPT> B<prefix_bundle> I<package> I<AppBundle>...
+
+I<OPT> : [B<--seppdir=>I<DIR>] [B<--platform=>I<OS>]
+
+=head1 DESCRIPTION
+
+The B<seppadm> command is used to administer software packages within the
+B<SEPP> system. Its primary functions are: installing
+and removing packages, preparing directories for package installation,
+mirroring packages from other servers, list available packages,
+maintain the SEPP Application Catalog web site with information on the
+available packages and keeping the local mirrors up to date.
+
+=over 10
+
+=item B<prepare> [I<pathname>/]I<package> [B<--shellonly>] [B<--noshell>]
+
+Creates a skeleton package directory. seppadm will automatically
+choose the filesystem with the most free space.
+By specifying a pathname, this automatic
+choice can be overridden.
+
+The package name must have the format I<application-version-maintainer>.
+The package directory will become visible as /usr/pack/I<package>.
+This directory will contain one
+subdirectory called B<SEPP> which contains a number of template files.
+These templates have to be edited to fit the package.
+
+When the B<prepare> function completes, it will execute an 'install shell'
+which provides a controlled environment for application compilation and
+installation.
+
+The options [B<--shellonly>] [B<--noshell>] allow to access an already
+installed package with the install shell and not to get an install shell at
+all respectively.
+
+In an AFS setting if the new package should reside in a volume of their
+own the volume must exist prior to preparing the package. As seppadm
+has no means for doing this for you.
+
+In a DFS setting the new package directory must exist prior to preparing
+the package. As seppadm has no means for doing this for you.
+
+=item B<install> I<package> [B<--default>] [B<--force>]
+
+Installing a package means two things: First the binaries get linked
+into the /usr/sepp/bin directory and second, the application gets
+listed in your packlist and can therefore be installed on cooperating
+systems.
+
+For an OSX Platform, the directories indicated in the binaries section
+of the META file are searched for OSX Application bundles. The
+dir-structure of the SEPP-Package is then stubbed in the
+C</usr/sepp/macosx> dir. As an example the package C<mypkg-1.0-as>
+could have the following content:
+
+ /usr/pack/mypkg-1.0-as
+   powerpc-apple-darwin7.4.1/
+      Applications/
+         App1.app/
+         App2.app/
+         Examples/
+         Important.doc
+      Library/
+         AdditionalLibs/
+            Lib1.dyld
+
+ /usr/sepp/var/mypkg-1.0-as
+   Library/
+      Preferences/
+         ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App1
+         ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App2
+      AdditionalLibs (symlink into /usr/pack/...)
+
+The relevant sections of the C<SEPP/META> file:
+
+ *** package name ***
+ MyPkg
+
+ *** categories ***
+ misc
+
+The relevant sections of the C<SEPP/META.macosx> file:
+
+ *** macosx binaries ***
+ powerpc-apple-darwin7.4.1/Applications
+ >>powerpc-apple-darwin7.4.1/Applications/Important.doc
+
+The resulting structure in the C<macosx> directory would be:
+
+ /usr/sepp/macosx/
+   Applications/
+      All/
+         misc/
+            MyPkg-1.0-as/
+               App1.app/ (stub)
+               App2.app/ (stub)
+               Examples/ (symlink)
+               Important.doc (copy)
+       Default/
+         misc/
+            MyPkg/
+               App1.app/ (stub)
+               App2.app/ (stub)
+               Examples/ (symlink)
+               Important.doc (copy)
+    Library/
+       Preferences/
+          ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App1 (symlink)
+          ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App2 (symlink)
+       AdditionalLibs/
+          Lib1.dyld (symlink)
+
+=item B<remove> I<package> [B<--final>] [B<--usrsepp>]
+
+Removes a package from the system. Without the option
+B<--final> the package does not get removed for real. It just
+gets earmarked, so that people who still use the package get a warning,
+telling them that the package is going to be removed soon.
+The option B<--final> removes the package for real.
+
+The option B<--usrsepp> targets the cleaning towards /usr/sepp/{bin,man,html} only.
+
+=item B<mirror> I<package> [B<--force>]
+
+Create a local copy of a package. This is to increase reliability and
+performance. Use the B<--force> option to get your mirror updated regardless of the
+state of the applications CHANGE log and PackList.
+
+=item B<mirrorupdate>
+
+Verifies that all local mirrors are up to date.
+
+=item B<expose> I<package>
+
+If a package has the license type 'world', this function will expose the
+whole package on the sepp package website by creating tar.bz2 archives in
+the SEPP/pub directory of the package. If there are recognizable
+architecture subdirectories in the package root, separate archives will be
+generated for each architecture. The F<SEPP/pub> directory will be symlinked
+from F</usr/sepp/html/pack/>I<package>. A list of all published packages is
+maintained in F</usr/sepp/html/pack/index.txt>. Use the B<sepp-get>
+application to download exposed sepp packages from one site to another.
+
+=item B<report>  [B<--datesort>] [B<--showremoved>]
+
+Generates a list of available packages using information from all linked
+servers.
+
+With B<--showremoved> seppadm will try to access F<SEPP/REMOVABLE> in each SEPP
+package to see if it has been removed. This can make the report much more slow.
+
+=item B<webbuild> [B<--localonly>] [B<--all>]
+
+regenerates the local web site. Only the required pages will be built, unless
+B<--all> is specified.
+
+B<seppadm> I<OPT> B<prefix_bundle> I<package> I<AppBundle>...
+
+MacOSX only: Ensure that the Bundle identifier specified in
+C<Info.plist> file of an application bundle is prefixed with our own
+prefix. This ensures that two installed versions of the same
+application read preferences from different files. Works only for
+Cocoa applications. The prefix is constructed according to the OSX standards:
+
+C<ch.ethz.ee.isg.>I<pkg_name>C<->I<version_number>C<->I<maintainer>C<.>I<original_identifier>
+
+=back
+
+=head2 Options
+
+=over 10
+
+=item --seppdir=DIR
+
+Use I<DIR> instead of /usr/sepp
+
+=item --platform=OS
+
+Replace "preferred operating system" of sepp.conf with I<OS>
+
+=back
+
+=head1 BUGS
+
+No Idea ... But if you tell me I'll fix 'em.
+
+=head1 HISTORY
+
+2004-08-27 as Extended for MacOSX
+
+=head1 AUTHOR
+
+S<Tobias Oetiker <oetiker@ee.ethz.ch>>
+S<David Schweikert <dws@ee.ethz.ch>> (maintainer)
+
+=cut
+
+# STATIC CONFIGURATION
+
+my %DIR =  (
+        'sepp' => '/usr/sepp',
+        'pack' => '/usr/pack'
+           );
+
+my $seppdomain; # filled by CheckSEPPrc
+
+# Below is the system specific setup for a Solaris Box. When you want to use
+# sepp this must be ported. Make sure the automountr parts work on the new
+# target OS. They will most likely have to be ported ...
+
+#make sure we find uname
+$ENV{PATH}="/usr/bin:/usr/sbin:/bin:/sbin:/usr/lib";
+
+# PLATFORM CONFIGURATION
+
+my %platform_triplets = (
+    'sun4u-sun-solaris2.8'      => { OS => 'solaris' },
+    'i686-debian-linux3.1'      => { OS => 'linux' },
+    'amd64-debian-linux3.1'     => { OS => 'linux' },
+    'powerpc-apple-darwin7.4.1' => { OS => 'darwin' },
+);
+
+my ($OS, %PROG, $UNAME, @PATH, @MANPATH);
+switch: for (`uname -sr`) {
+    chomp;
+    /^SunOS 5/ && do {
+
+        $OS = "solaris";
+
+	%PROG = (
+		    'rsync'   => '/usr/sepp/sbin/rsync',
+		    'df'   => '/bin/df -k',
+		    'rm'   => '/bin/rm',
+		    'find' => '/usr/bin/find',
+		    'tar'  => '/usr/bin/tar',
+		    'uname' => '/bin/uname',
+		    'fs' => '/usr/afsws/bin/fs lq'
+		   );
+
+	`$PROG{uname} -rmp ` =~ /^5.(\S+) (\S+) (\S+)/;
+
+	$UNAME = lc("$OS-2.$1 $3 $2");
+
+	@PATH = qw(/usr/bin
+		      /usr/sbin
+		      /usr/ucb
+		      /usr/openwin/bin
+		      /usr/dt/bin
+		      /usr/ccs/bin);
+
+	@MANPATH = qw(/usr/man
+			 /usr/openwin/man
+			 /usr/dt/man);
+
+	last switch
+    };
+
+    /^OSF1 V4/ && do {
+
+	$OS = "osf1";
+
+	%PROG = (
+		    'rsync'   => '/usr/sepp/sbin/rsync',
+		    'df'   => '/usr/bin/df -k',
+		    'rm'   => '/usr/bin/rm',
+		    'find' => '/usr/bin/find',
+		    'tar'  => '/usr/bin/tar',
+		    'uname' => '/usr/bin/uname'
+		   );
+
+	`$PROG{uname} -rmp ` =~ /^V(\d+\.\d+) (\S+)/;
+
+	$UNAME = lc("$OS-$1 $2");  # osf1-4.0 alpha
+
+        `/usr/sbin/psrinfo -v` =~ /The alpha( \S+) \S.*processor/;
+        $UNAME .= lc $1;            # osf1-4.0 alpha ev5.6
+
+	@PATH = qw(/usr/bin
+		      /usr/sbin
+		      /usr/ucb
+		      /usr/bin/X11
+		      /usr/dt/bin
+		      /usr/ccs/bin
+                      /usr/ucb
+                 );
+
+	@MANPATH = qw(/usr/man
+			 /usr/dt/man);
+
+	last switch
+
+    };
+
+    /^IRIX/ && do {
+
+        $OS = "irix";
+
+        %PROG = (
+		    'rsync'   => '/usr/sepp/sbin/rsync',
+                    'df'   => '/usr/bin/df -k',
+                    'rm'   => '/usr/bin/rm',
+                    'find' => '/usr/bin/find',
+                    'tar'  => '/usr/bin/tar',
+                    'uname' => '/usr/bin/uname'
+                   );
+
+        `$PROG{uname} -rmp ` =~ /^(\d+\.\d+) (\S+) (\S+)/;       # 6.4 IP30 mips
+
+        $UNAME = lc("$OS-$1 $3 $2");  # irix64-6.4 mips ip30
+
+        @PATH = qw(/usr/bin
+                      /usr/sbin
+                      /usr/bin/X11
+                      /usr/ccs/bin
+                      /usr/bsd
+                 );
+
+        @MANPATH = qw(/usr/share/catman);
+
+        last switch
+
+    };
+
+    /^AIX / && do {
+
+        $OS = "aix-4";
+
+        %PROG = (
+		    'rsync'   => '/usr/sepp/sbin/rsync',
+                    'df'   => '/usr/bin/df -k',
+                    'rm'   => '/usr/bin/rm',
+                    'find' => '/usr/bin/find',
+                    'tar'  => '/usr/bin/tar',
+                    'uname' => '/usr/bin/uname'
+                   );
+
+        `$PROG{uname} -vr ` =~ /^(\S+)\s+(\S+)$/;       # 2 3  for 3.2,   2 4 for 4.2
+
+        $UNAME = lc("$OS-$2.$1 rs6000");  # aix-4.2 rs6000
+
+        @PATH = qw(/usr/bin
+                      /usr/sbin
+                      /usr/bin/X11
+                      /usr/ccs/bin
+                      /usr/ucb
+                 );
+
+        @MANPATH = qw(/usr/man);
+
+        last switch
+
+    };
+
+    /^HP-UX / && do {
+
+        $OS = "hpux-10";
+
+        %PROG = (
+		    'rsync'   => '/usr/sepp/sbin/rsync',
+                    'df'   => '/usr/bin/bdf',
+                    'rm'   => '/usr/bin/rm',
+                    'find' => '/usr/bin/find',
+                    'tar'  => '/usr/bin/tar',
+                    'uname' => '/usr/bin/uname'
+                   );
+
+        `$PROG{uname} -r ` =~ /^\w+\.(10\.\d+)$/;       # 2 3  for 3.2,   2 4 for 4.2
+
+        $UNAME = lc("$OS-$1 pa-risc");  # hpux-10.20 ps-risc
+
+        @PATH = qw(/usr/bin
+			/usr/sbin
+			/usr/contrib/bin
+			/usr/bin/X11
+			/usr/contrib/bin/X11
+			/opt/upgrade/bin
+			/opt/ansic/bin
+			/usr/ccs/bin
+			/usr/ucb
+		  );
+
+        @MANPATH = qw(/usr/man);
+
+        last switch
+
+    };
+
+    /^Linux / && do {
+
+        $OS = "linux";
+
+        %PROG = (
+                    'rsync'   => '/usr/sepp/sbin/rsync',
+                    'df'   => '/bin/df -k',
+                    'rm'   => '/bin/rm',
+                    'find' => '/usr/bin/find',
+                    'tar'  => '/usr/bin/tar',
+                    'uname' => '/bin/uname'
+                   );
+
+        `$PROG{uname} -rm ` =~ /(\S+) (\S+)/;
+
+        $UNAME = lc("$OS-$1 $2"); # linux-2.2.14 i686
+
+        @PATH = qw(   /usr/bin
+                      /usr/sbin
+                      /usr/X11R6/bin
+                 );
+
+        @MANPATH = qw(/usr/man /usr/X11R6/man);
+
+        last switch
+
+    };
+
+    /^Darwin / && do {
+
+        $OS = "darwin";
+
+        %PROG = (
+		    'ditto'   => '/usr/bin/ditto',
+                    'rsync'   => '/usr/sepp/sbin/rsync',
+                    'df'   => '/bin/df -k',
+                    'rm'   => '/usr/bin/rm',
+                    'find' => '/usr/bin/find',
+                    'tar'  => '/usr/bin/tar',
+                    'uname' => '/usr/bin/uname'
+                   );
+
+        `$PROG{uname} -rmp ` =~ /(\S+) (\S+) (\S+) (\S+)/;
+
+        $UNAME = lc("$OS-$1 $4"); # linux-2.2.14 i686
+
+        @PATH = qw(   /usr/bin
+                      /usr/sbin
+                      /usr/X11R6/bin
+                 );
+
+        @MANPATH = qw(/usr/man /usr/X11R6/man);
+
+        last switch
+
+    };
+
+
+    &Error ("Support for '$_' is not yet included.");
+}
+
+# RSYNC CONFIGURATION
+
+my @RSYNC = ($PROG{rsync}, '--verbose','--archive','--hard-links',
+	  '--exclude','*~','--delete','--one-file-system');
+
+if($OS eq "darwin")
+  {
+    @RSYNC= ($PROG{ditto},"--rsrc","-X","-V");
+  }
+
+# GLOBAL VARIABLES
+
+my $CONF;
+
+# PROTOTYPES
+
+sub Main ();
+
+# major functions
+sub Prepare ();
+sub Install ();
+sub Remove ();
+sub Mirror ($$);             # Expects ParsePacklists as argument
+sub MirrorUpdate ();
+sub UnExpose ($);
+sub Expose ($);
+sub Report ();
+sub Webbuild ();
+sub prefix_bundle ();
+
+# function blocks
+sub CheckSEPPrc ();         # Validate sepprc.system
+sub ReadSEPPconf ();        # Read and Check SEPP system Config file
+sub CheckFirstLine ($@);    # check packages SEPP files first line
+sub ValidatePack ( $ );     # is package fit for Installation
+sub ReadMETA ( $ );         # Read and Check META file of an SEPP Package
+sub ReadCHANGES ( $ );      # Read and Check CHANGES file of an SEPP Package
+sub ParsePacklists ();      # get information about all the packages published.
+sub UpdateLocalPacklist( $ ); # update entry for pack in local packlist
+
+# helper
+sub StoreAutomount ( $ );   # store it again.
+sub ParseAutomount ();      # load the local autosepp_indirect table $t{server}{pack} = path
+sub CleanTree ($$);         # remove every symlink which points to a file matching a regexp
+sub ScanForBins ($);        # find binaries associated with a package
+sub FindBin ( $ );          # is a binary with the same name already on the sys
+sub FindMan ( $ );          # is a manpage with the same name already on the sys
+sub CheckDir ( $ );         # is the dir existing and writable
+sub CheckAccessDir ( $ );         # is the dir existing and writable
+sub Info ( $ );             # Info ...
+sub Tip ( $ );              # Tip ...
+sub Error ( @ );            # Report Error
+sub Warning ( $ );          # Warn about Problem
+sub Usage ();               # Print Usage
+sub ReadConf ($\%);         # General Loader for SEPP configuration Files
+sub FindFreePartition ();   # Find partition with the most free space
+sub CheckAppName ( $ );     # does the application name comply with sepp rules. (returns the
+sub README2html ( $ );      # convert a README file to html
+sub GetLocalPath ( $ );     # get real path to package for shareing ...
+sub MakeStub ( $ );         # create the little perl script we are pointing the slinks to
+sub StubLink ($$$$);        # link the stubs into the bin tree
+sub SymLink ($$$$);         # make a direct link for interpreter languages ...
+sub ManLink ($$$$$);         # link the manpages
+sub SlurpFile ( $ );        # read an array and return the pointer
+sub DumpFile ($$);          # write file to disk, given a name and a pointer to an array
+sub SaneShell ($);          # start /bin/tcsh as a sane build environment
+sub HTMLHead ($$);          # print html header line
+sub HTMLMouse ($);          # Display MouseOver in status line
+sub DiskToAuto($);          # Convert from a local mount-point to the remote mount-point
+sub MirrorMount($$);        # Mount a remote directory
+sub ChangeToSepp ();        # for operations which require this become the SEPP user
+sub CheckOpts (@);          # Make sure the options ARGV are from the list given
+sub WritableAfs ($);        # modify path from /afs/ssss/ddd to /afs/.ssss/ddd
+sub EnsureNewDir ($);	    # create dir or make sure its empty if it exists. On afs refuse to mkdir
+sub WritableDirTest ($);    # test if a directory is writable by actually writing to it .. 
+sub LockShared();           # mutual exclusion for seppadm (read-only)
+sub LockExclusive();        # mutual exclusion for seppadm (r/w)
+sub Unlock();               # release the lock
+sub GetFiles ($$);          # recursively find all files in a directory
+
+Main;
+
+sub Main ()
+{
+  umask 022;
+
+  # check global options
+  my $platform;
+  while(defined $ARGV[0] and $ARGV[0] =~ /^--([^\s=]+)(?:=(\S+))?/) {
+    shift @ARGV;
+    $1 eq 'seppdir' and do {
+      $DIR{'sepp'}=$2;
+      next;
+    };
+    $1 eq 'packdir' and do {
+      $DIR{'pack'}=$2;
+      next;
+    };
+    $1 eq 'platform' and do {
+      $platform=$2;
+      next;
+    };
+    Error "Unknown option: $1\n";
+  }
+
+  # verify sepp instalation
+  CheckDir "$DIR{'sepp'}/bin";
+  CheckDir "$DIR{'sepp'}/man";
+  CheckDir "$DIR{'sepp'}/stub";
+  CheckDir "$DIR{'sepp'}/var";
+  CheckDir "$DIR{'sepp'}/conf";
+  CheckDir "$DIR{'sepp'}/html";
+
+  $CONF = ReadSEPPconf;
+  if(defined $platform) {
+    # --platform=xxxx
+    $$CONF{'preferred operating system'}[0] = $platform;
+  }
+
+
+  if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}})
+    {
+      #set up the osx module with the apropriate parameters
+      require osx_stubber;
+      osx_stubber::init(\%DIR,\&Error,\&Warning,\&Info,\&ReadMETA,\&ReadConf);
+    }
+
+  my $FUNC = shift @ARGV;
+  Usage unless $FUNC;
+
+  if ($FUNC eq 'prepare') {
+    CheckOpts qw(noshell shellonly);
+    ChangeToSepp;
+    Prepare;
+  } elsif ($FUNC eq 'install') {
+    CheckOpts qw(force default osxnoaction);
+    CheckSEPPrc;
+    ChangeToSepp;
+    Install;
+  } elsif ($FUNC eq 'remove') {
+    CheckOpts qw(final usrsepp osxnoaction);
+    ChangeToSepp;
+    Remove;
+  } elsif ($FUNC eq 'mirror') {
+    CheckOpts qw(force);
+    ChangeToSepp;
+    my ($pl, $ol) = ParsePacklists;
+    Mirror($pl,$ol);
+  } elsif ($FUNC eq 'mirrorupdate') {
+    CheckOpts qw();
+    ChangeToSepp;
+    MirrorUpdate;
+  } elsif ($FUNC eq 'expose') {
+    ChangeToSepp;
+    Expose($ARGV[0])
+  } elsif ($FUNC eq 'report') {
+    CheckOpts qw(datesort showremoved);
+    Report
+  } elsif ($FUNC eq 'webbuild') {
+    CheckOpts qw(localonly all);
+    CheckSEPPrc;
+    ChangeToSepp;
+    Webbuild;
+  } elsif ($FUNC eq 'prefix_bundle') {
+    CheckOpts qw();
+    ChangeToSepp;
+    prefix_bundle;
+  } else {
+    Warning "Unknown function $FUNC";
+    Usage;
+  }
+  exit 0;
+}
+
+sub Prepare ()
+{ 
+    my $noshell;
+    my $shellonly;
+    if ((scalar grep {$_ eq '--noshell'} @ARGV) > 0) {
+	$noshell=1;
+    }
+    print "$ARGV[0]\n";
+    $ARGV[0] =~ m|^(.*?)([^/]+)$|;
+    my $packdisk = $1;
+
+    my ($packname,$packversion,$packauthor) = CheckAppName $2;
+    $packname = "${packname}-${packversion}-${packauthor}";
+
+    if ((scalar grep {$_ eq '--shellonly'} @ARGV) > 0) {
+	Error "$packname must exist for --shellonly"
+	  unless -d "$DIR{'pack'}/$packname";
+        SaneShell($packname);
+        exit 0;
+    }
+    else {
+        Error "Package $packname does already exist.\nUse --shellonly if you only want the shell."
+            if -e "$DIR{'pack'}/$packname/.";
+    }
+
+    LockExclusive();
+    $packdisk = FindFreePartition unless $packdisk;
+    $packdisk = "/$packdisk/";
+    $packdisk =~ s|//+|/|g;
+
+    Error "Directory $packdisk does not exist"
+	unless -d $packdisk;
+
+    EnsureNewDir "$packdisk$packname";
+
+    my $auto = ParseAutomount;
+    my $server = (split /\s+/, $ {$$CONF{'local server'}}[0])[0];
+    $$auto{$packname}{$server} = DiskToAuto($packdisk);
+    StoreAutomount($auto);
+
+    Info "Added $packname to $DIR{'sepp'}/conf/autosepp_indirect";
+    Error "Automounting $packname on $DIR{'pack'} failed.
+       Check your automounter setup."
+	unless WritableDirTest "$DIR{'pack'}/$packname/.";
+
+    system @RSYNC, "$DIR{'sepp'}/conf/template/", "$DIR{'pack'}/$packname/SEPP";
+
+    Info "Copied templates to $DIR{'pack'}/$packname/SEPP";
+
+    my $METAslurp = SlurpFile "$DIR{'pack'}/$packname/SEPP/META";
+    map {s/^(\*\*\* operating system \*\*\*)$/$1\n$UNAME/} @$METAslurp;
+    DumpFile "$DIR{'pack'}/$packname/SEPP/META", $METAslurp;
+
+    open ORIG, ">$DIR{'pack'}/$packname/SEPP/ORIGINAL"
+	or Error "opening  $DIR{'pack'}/$packname/SEPP/ORIGINAL: $!";
+    print ORIG "This is an Original Package.\n".
+	"When mirroring this file will not be copied and thus identify the original Copy\n";
+    close ORIG;
+
+
+    # make sure no one can read this package;
+    chmod 0, "$DIR{'pack'}/$packname/SEPP/ORIGINAL";
+
+
+    open HIST,">>$DIR{'pack'}/$packname/SEPP/CHANGES"
+	or Error "opening  $DIR{'pack'}/$packname/SEPP/CHANGES: $!";
+
+
+    my($day,$month,$year)=(localtime(time()))[3,4,5] ;
+
+    $month++; $year += 1900;
+
+    printf HIST "%04d-%02d-%02d Package Prepared\n",$year,$month,$day;
+    close HIST;
+
+    print "
+SUCCESS: * Prepared $packname on $packdisk
+         * All template files are in place
+         * You can now install $packname into
+           $DIR{'pack'}/$packname
+         * Update the files in
+           $DIR{'pack'}/$packname/SEPP to match up with reality.
+";
+    # Unlock before the shell is started... otherwise the lock will
+    # exist for a long time ...
+    Unlock();
+    SaneShell($packname) unless defined $noshell;
+}
+
+sub Install ()
+{
+    my $pack = $ARGV[0];
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+    my $default;
+    my $forced;
+    my $noaction;
+    my $server;
+    if ((scalar grep {$_ eq '--default'} @ARGV) > 0) {
+        $default=1;
+    }
+    if ((scalar grep {$_ eq '--force'} @ARGV) > 0) {
+        $forced=1;
+    }
+    if ((scalar grep {$_ eq '--osxnoaction'} @ARGV) > 0) {
+        $noaction=1;
+    }
+
+    LockExclusive();
+    my ($packlist, $origlist) = ParsePacklists; #all available packages
+    my $auto = ParseAutomount;
+    my $pack_was_already_installed=0; # in multi-platform installations where the
+                                      # automounter table is shared, the pack shouldn't
+                                      # be removed from the table just because it is
+                                      # not supported by some platform
+
+
+    if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}})
+      {
+	-d "$DIR{sepp}/macosx" or 
+	  (mkdir "$DIR{sepp}/macosx",0755) or 
+	  Error("Could not create $DIR{sepp}/macosx");
+	-d "$DIR{sepp}/macosx/Applications" or 
+	  (mkdir "$DIR{sepp}/macosx/Applications",0755) or 
+	  Error("Could not create $DIR{sepp}/macosx/Applications");
+	-d "$DIR{sepp}/macosx/Library" or 
+	  (mkdir "$DIR{sepp}/macosx/Library",0755) or 
+	  Error("Could not create $DIR{sepp}/macosx/Library");
+      }
+
+    if (defined $$packlist{$pack}) {
+        $pack_was_already_installed=1 if defined $auto->{$pack};
+        foreach $server (keys %{$$packlist{$pack}}) {
+            $$auto{$pack}{$server} = $$packlist{$pack}{$server}[2];
+        }
+        StoreAutomount($auto);
+        Info "Added remote package to automount table";
+    }
+    if (not -d "$DIR{'pack'}/$pack") {
+        Error "Can't mount Package $pack. Are you sure it exists?";
+    }
+
+    my $META = ValidatePack $pack;
+
+    # do we like this OS ?
+    if(! grep /$$CONF{'preferred operating system'}[0]/, @{$$META{'operating system'}}) {
+        if(not $pack_was_already_installed) {
+            delete $$auto{$pack};
+            StoreAutomount($auto);
+            Info "Deleted remote package from automount table";
+        }
+        Error "This pack is only supported for '".
+            (join " / ", @{$$META{'operating system'}})."' but your setup is for ".
+            $$CONF{'preferred operating system'}[0]."\n";
+    }
+
+    # create stub
+
+    MakeStub $pack;
+
+    Info "Created $pack stub";
+
+    # write bin links
+    my $bin;
+    foreach $bin (@{$$META{binaries}}) {
+        my $direct =0;
+	$direct = 1 if $bin =~ s/^>>//;
+
+	# Separate the bin/ entries from the OSX Application/ Entries with a trailing " $"
+	next if $bin =~ m/\s\$\s*$/;
+	my @pelem = split /\//, $bin;
+	my $fileregexp = pop @pelem;
+	my $path = join "/", @pelem;
+	opendir BINDIR,"$DIR{'pack'}/$pack/$path"
+	    or Error "opendir $DIR{'pack'}/$pack/$path: $!";
+	while (defined ($_=readdir BINDIR)) {
+	    if (/^$fileregexp$/ && -e "$DIR{'pack'}/$pack/$path/$_") {
+		next if /^\./;
+		# for script languages, stub links don't work ...
+		if ($direct) {
+		  SymLink "$pack/$path/$_", "$_", $default, $forced;
+		  SymLink "$pack/$path/$_", "$_-$packversion", $default, $forced;
+		  SymLink "$pack/$path/$_", "$_-$packversion-$packmaint", $default, $forced;
+		} else {
+		  StubLink $pack,"$_",$default, $forced;
+		  StubLink $pack,"$_-$packversion",$default, $forced;
+		  StubLink $pack,"$_-$packversion-$packmaint",$default, $forced;
+		}
+	    }
+	}
+	closedir BINDIR;
+    }
+
+    Info "Generated $DIR{'sepp'}/bin links";
+
+    # write man links
+    my $man;
+    foreach $man (@{$$META{'manpages'}}) {
+	my @pelem = split /\//, $man;
+	my $fileregexp = pop @pelem;
+	my $path = join "/", @pelem;
+	opendir MANDIR,"$DIR{'pack'}/$pack/$path"
+	    or Error "opendir $DIR{'pack'}/$pack/$path: $!";
+	while (defined ($_=readdir(MANDIR))) {
+	    if (/^$fileregexp$/ && -e "$DIR{'pack'}/$pack/$path/$_") {
+		next if /^\./;
+		next unless /(.+)\.([^.]+)$/;
+		my($baseman,$manext)=($1,$2);
+		ManLink $pack,"$path/$_","$baseman.$manext",$default,$forced;
+		ManLink $pack,"$path/$_","$baseman-$packversion.$manext",$default,$forced;
+		ManLink $pack,"$path/$_","$baseman-$packversion-$packmaint.$manext",$default,$forced;
+	    }
+	}
+	closedir BINDIR;
+    }
+
+    Info "Generated $DIR{'sepp'}/man links";
+
+    # copy var template
+    if (defined $$META{vartmpl}[0]) {
+	if (-e "$DIR{'sepp'}/var/$pack") {
+	    Warning "var dir for $pack already exists not copying";
+	}
+	else {
+	    system @RSYNC,"$DIR{'pack'}/$pack/".$$META{vartmpl}[0]."/","$DIR{'sepp'}/var/$pack";
+	    Info "Created and filled $DIR{'sepp'}/var/$pack";
+	    Tip "You might want to edit the files in $DIR{'sepp'}/var/$pack";
+	}
+    }
+
+    # link html docs
+    if (defined $$META{'html doc root'}[0]) {
+      Info "Created HTML doc link";
+      unlink "$DIR{'sepp'}/html/$pack";
+      symlink "$DIR{'pack'}/$pack/".$$META{'html doc root'}[0],
+              "$DIR{'sepp'}/html/$pack";
+    }
+    # link SEPP dir
+    unlink "$DIR{'sepp'}/html/$pack.SEPP";
+    symlink "$DIR{'pack'}/$pack/SEPP",
+            "$DIR{'sepp'}/html/$pack.SEPP";
+    # if the pack is not local this line will do nothing
+    Info "Updated Local Packlist" if UpdateLocalPacklist $pack;
+
+    # remove REMOVABLE if present
+    my $removable = "$DIR{'pack'}/$pack/SEPP/REMOVABLE";
+    if(-f $removable) {
+        unlink $removable or die "can't remove $removable: $!\n";
+        Info "Removed $removable";
+    }
+
+    # Only try to install bundle stubs for OSX-Apps
+    if(
+       grep { m/^darwin/i } @{$CONF->{'preferred operating system'}} and
+       grep { m/^darwin/i } @{$META->{'operating system'}}
+      )
+      {
+	# osx_specific parts handle $noaction internally
+	osx_stubber::install_app_stubs($pack,$default,$forced,$noaction);
+	osx_stubber::install_app_libs($pack,$default,$forced,$noaction);
+      }
+    Unlock();
+}
+
+# Remove a package. If option final is given, the actual files will be removed from the
+# disk.
+sub Remove ()
+{
+  my $pack = $ARGV[0];
+  my $final=0;
+  my $usrsepp=0;
+  my $noaction=0;
+
+  if ((scalar grep {$_ eq '--final'} @ARGV) > 0) {
+    $final=1;
+  }
+  if ((scalar grep {$_ eq '--usrsepp'} @ARGV) > 0) {
+    $usrsepp=1;
+  }
+  if ((scalar grep {$_ eq '--osxnoaction'} @ARGV) > 0) {
+    $noaction=1;
+  }
+
+  LockExclusive();
+  CheckAppName $pack;
+  my $realpath = GetLocalPath $pack;
+  if ($realpath && -d "$DIR{'pack'}/$pack" && $usrsepp == 0){
+    # put 'announcer' in place
+    Info "Putting REMOVABLE file in place, to announce package disaperance";
+    if (-d "$realpath$pack/SEPP"){
+      open ST, ">$realpath$pack/SEPP/REMOVABLE"
+        or Error "writing new $realpath$pack/SEPP/REMOVABLE: $!";
+      print ST "On ".localtime(time)." the pack '$pack' has been
+scheduled for removal. It is quite likely that a newer version of
+the package exists. If you can not use the new version, please
+contact your system manager.\n";
+      close ST; 
+    }
+    Info "Removing package from local packlist";
+    my $localpacklist = (split /\s+/, $ {$$CONF{'local server'}}[0])[1];
+    my $lines = SlurpFile $localpacklist;
+    my @newpack = grep !m|/$pack\s|, @$lines;
+    DumpFile $localpacklist, \@newpack;
+  } else {
+    Info "Not doing anything to $DIR{'pack'}/$pack because it is not local";
+  }
+  if ($final) {
+    my $realpath = GetLocalPath($pack);
+    if ($realpath) {
+      Info "Removing package tree $DIR{'pack'}/$pack";
+      print STDERR "\nI will  physically remove $realpath$pack (YES/NO) ?";
+      if (<STDIN> eq "YES\n") {
+	Info "Starting Package Removal";
+ 	system $PROG{'rm'}, '-rf', $realpath.$pack;
+	Info "Failed to remove package completely. Maybe you need to do this by hand.\n".
+	     "  On AFS this is normal as every pack resides in its own volume\n"
+	  if -d $realpath.$pack;
+      } else {
+	Error "WHOA! Not Removing anything ... you did not answer 'YES'.";
+      }
+    }
+    Info "Removing package from autosepp_indirect file";
+    my $auto = ParseAutomount;
+    delete $$auto{$pack};
+    StoreAutomount($auto);
+  }
+  if ($final || $usrsepp) {
+    Info "Removing $pack stuff from $DIR{'sepp'}";
+    CleanTree $DIR{'sepp'}."/bin",$pack;
+    CleanTree $DIR{'sepp'}."/man",$pack;
+    CleanTree $DIR{'sepp'}."/html",$pack;
+    Tip "Check $DIR{'sepp'}/var/$pack and remove manualy !"
+      if -e $DIR{'sepp'}."/var/$pack";
+    unlink $DIR{'sepp'}."/stub/$pack";
+  } else {
+    Tip "Physically remove $pack from $DIR{'sepp'} and $DIR{'pack'} with option '--final'" unless $final;
+  }
+
+  # Don't make dependent on content of META file. Even works when darwin is not
+  # among the operating systems.
+  if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}})
+    {
+      osx_stubber::remove_app_stubs($pack,$noaction);
+      osx_stubber::remove_app_libs($pack,$noaction);
+    }
+
+  Unlock();
+
+  # do not expose anything that is being removed or pending removal
+  UnExpose($pack);
+
+}
+
+sub MirrorMount ($$) {
+    my $server = shift;
+    my $dir = shift;
+    my $ldir = $dir;
+    $ldir =~ s|/|_|g;
+    my $auto = ParseAutomount;
+
+    my $auto_entry;
+    do {
+        my $random = sprintf "%x%x", rand()*(1<<16), rand()*(1<<16);
+        $auto_entry = ".mirrormount.$random";
+    } while exists $$auto{$auto_entry};
+
+    my $mount = "$DIR{'pack'}/$auto_entry";
+
+    $$auto{$auto_entry} = "$server:$dir";
+    StoreAutomount $auto;
+    sleep 2; # allow the automounter to catch up with the new automap
+        Error "Couln't mount $server:$dir" unless -d "$mount/.";
+    return $mount;
+}
+
+sub Mirror ($$) {
+    my $pl = shift; # packlist (list of packages)
+    my $ol = shift; # origlist (list of servers that have the original copy)
+    my $pack = shift @ARGV;
+    my $force;
+    if ((scalar grep {$_ eq '--force'} @ARGV) > 0) {
+      $force=1;
+    }
+
+    LockExclusive();
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+
+    Error "You can only mirror applications which are installed"
+	unless -d "$DIR{'pack'}/$pack";
+
+    my $localpath = GetLocalPath $pack;
+    my ($localserver,$localpacklist) = split /\s+/, $ {$$CONF{'local server'}}[0];
+    if (not defined $localpath) {
+	Info "$pack seems to be a candidate for mirroring ...";
+	my $packdisk = FindFreePartition;
+	Info "Establishing Mirror on $packdisk";
+	EnsureNewDir "$packdisk/$pack";
+
+	system @RSYNC, "$DIR{'pack'}/$pack/","$packdisk/$pack";
+	my $auto = ParseAutomount;
+	$$auto{$pack}{$localserver} = DiskToAuto("$packdisk");
+	StoreAutomount $auto;
+	Info "Updated local Automount Table";
+	UpdateLocalPacklist $pack;
+	Info "Updated local Packlist";
+    } else {
+	Error "You have the Original on your site. No need to update your mirror!"
+	    if -f "$localpath$pack/SEPP/ORIGINAL";
+
+        if(! defined $$ol{$pack}) {
+            Warning "Could not find original of $pack";
+            return;
+        }
+        my $origserver  = $$ol{$pack};
+        my @origentry = @{$$pl{$pack}{$origserver}};
+        my @localentry = @{$$pl{$pack}{$localserver}};
+	if (($origentry[1] gt $localentry[1]) or $force) {
+            Info "$pack --> updating...";
+	    my $mount = MirrorMount($origserver,$origentry[2].$pack);
+            Error "Could not mount original :-( of $pack" unless -f "$mount/SEPP/ORIGINAL";
+            system @RSYNC, '--exclude', "SEPP/ORIGINAL", "$mount/.", $localpath.$pack;
+            #print join(' ',(@RSYNC, '--exclude', "SEPP/ORIGINAL", "$mount/.", $localpath.$pack))."\n";
+            # we should really check rsync's exit code
+            UpdateLocalPacklist $pack;
+            Info "Updated local Packlist";
+        } else {
+            Info "$pack --> mirror current";
+        }
+    }
+    Unlock();
+}
+
+sub MirrorUpdate ()
+{
+    my $serv = (split /\s+/, $ {$$CONF{'local server'}}[0])[0];
+    my $pack;
+    LockExclusive();
+    my ($pl,$ol) = ParsePacklists; # packlist, origlist
+    foreach $pack (keys %$pl) {
+	#print ">>$pack $serv ${$$pl{$pack}{$serv}}[0] ${$$pl{$pack}{$serv}}[1]\n";
+        if (defined $$pl{$pack}{$serv}){
+	    if ('m' eq $ {$$pl{$pack}{$serv}}[0]){
+		#print ">>$pack $$pl{$pack}{$serv}[0] $$pl{$pack}{$serv}[1]\n";
+		#print ">>$pack\n";
+		unshift @ARGV, $pack;
+		Mirror ($pl, $ol);
+	    }
+	    UpdateLocalPacklist $pack;
+	}
+    }
+    Unlock();
+}
+
+
+sub UnExpose ($) {
+    my $pack = shift;
+
+    LockExclusive();
+    my $pubdir = $DIR{"sepp"}."/html/pack";
+    Info "Rebuilding $pubdir/index.txt";
+    my $index = SEPP::Index::index_read("$pubdir/index.txt");
+    delete $index->{$pack};
+    SEPP::Index::index_write($index, "$pubdir/index.txt");
+    Unlock();
+}
+
+sub TarPack ($){
+    my $pack = shift;
+    my $archpat = '(?:amd64|i686|sun4u|powerpc)-\S+-\S+';
+    opendir DIR, $DIR{'pack'}."/$pack" or Error "Can't open $DIR{'pack'}/$pack $!";
+    my @archs = grep {/^$archpat$/} readdir DIR;
+    closedir DIR;
+    my @excl;
+    if(not -d "$DIR{'pack'}/$pack/SEPP/pub") {
+	mkdir("$DIR{'pack'}/$pack/SEPP/pub",0755) or
+	    Error "Couldn't create $DIR{'pack'}/$pack/SEPP/pub $!";
+    }
+    my $tar = '/usr/sepp/bin/gtar';
+    Error "To Expose SEPP Packages $tar is required" unless -x $tar;
+    foreach my $arch (@archs){
+	Info "Tarring $pack/$arch";
+	system $tar,"-jcf","$DIR{'pack'}/$pack/SEPP/pub/$arch.tar.bz2","-C$DIR{'pack'}","$pack/$arch";
+	Error "aborting tar failed ..." if $?;
+	push @excl, "--exclude=$pack/$arch";
+    }
+    push @excl, "--exclude=$pack/SEPP/pub";
+    push @excl, "--exclude=$pack/SEPP/ORIGINAL";
+    Info "Tarring remaining bits of $pack";
+    system $tar,"-C$DIR{'pack'}","-jcf","$DIR{'pack'}/$pack/SEPP/pub/common.tar.bz2",@excl,$pack;
+    Error "aborting tar failed ..." if $?;
+    return ('common',@archs)
+}
+	
+sub Expose ($)
+{
+    my $pack = shift;
+    my $pubdir = $DIR{"sepp"}."/html/pack";
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+    my $META = ValidatePack $pack;
+    if(not $META->{'license'}[0] eq "world") {
+	Error "Cannot publish $pack unless its license is 'world'";
+    }    
+    if(not -d "$pubdir") {
+	mkdir("$pubdir",0755) or
+	    Error "Couldn't create $pubdir";
+	Info "Created directory $pubdir";
+    }
+    if(not -f "$pubdir/.htaccess") {
+	open (HTACCESS,">$pubdir/.htaccess") or
+	    Error "Couldn't write $pubdir/.htaccess";
+	print HTACCESS "IndexIgnore *\n";
+	print HTACCESS "DirectoryIndex index.txt\n";
+	close HTACCESS;
+	Info "Wrote new $pubdir/.htaccess";
+    }
+    my @tars = TarPack $pack;
+     
+    if(not -e "$pubdir/$pack") {
+	symlink "/usr/pack/$pack/SEPP/pub","$pubdir/$pack";
+	Info "Linked $pubdir/$pack /usr/pack/$pack/SEPP/pub";
+    }
+
+    LockExclusive();
+
+    Info "Rebuilding $pubdir/index.txt";
+    my $index = SEPP::Index::index_read("$pubdir/index.txt");
+    # remove any space in the definition of each dependency
+    my @deps = map { my $d = $_; $d =~ s/\s+//g; $d } @{$META->{'depends on'}};
+    my $deps = join(" ", @deps) || "";
+    $index->{$pack} = {
+        pubtime => time, 
+        arch    => "@tars",
+        name    => $META->{'package name'}[0],
+        desc    => $META->{'one line description'}[0],
+        deps    => $deps,
+    };
+    SEPP::Index::index_write($index, "$pubdir/index.txt");
+
+    Unlock();
+}
+
+sub Report ()
+{
+    my $installed;
+    my $localserver = (split /\s+/, $ {$$CONF{'local server'}}[0])[0];
+    my ($pl,$ol) = ParsePacklists;
+    my $am = ParseAutomount;
+    my $pack;
+    my @order;
+    if ((scalar grep {$_ eq '--datesort'} @ARGV) > 0) {
+	@order = (sort {$$pl{$b}{(keys %{$$pl{$b}})[0]}[1] cmp
+			$$pl{$a}{(keys %{$$pl{$a}})[0]}[1] } keys %$pl)
+    } else {
+	@order = (sort keys %$pl)
+    }
+
+    print "\nPackage Report for $localserver  (L=Local Copy, I=Installed)\n".
+	("-" x 80)."\n";
+    # No need for locking here
+    # LockShared();
+    foreach $pack (@order) {
+	my ($packname,$packversion,$packauthor) = CheckAppName $pack;
+        my $originalserver;
+        if(defined $$ol{$pack}) {
+            $originalserver = $$ol{$pack};
+        }
+        else {
+            #Warning "No original found for $pack.\n";
+	    $originalserver = (keys %{$$pl{$pack}})[0]; # remove this...
+        }
+	my $inst ="-";
+	my $loca ="-";
+	my $MT;
+        if(defined $$am{$pack}) {
+            if ((scalar grep {$_ eq '--showremoved'} @ARGV) > 0) {
+                $inst = -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE" ? 'R' : 'I';
+            }
+            else {
+                $inst = 'I';
+            }
+        }
+	$loca = "L" if defined $$am{$pack}{$localserver};
+	printf "%s%s %-18s %s  %s\n", $inst, $loca,
+	$packname."-".$packversion."-".$packauthor,
+	$$pl{$pack}{$originalserver}[1],
+	$$pl{$pack}{$originalserver}[3];
+    }
+    print "\n";
+    # Unlock();
+}
+
+sub Webbuild (){
+    my $installed;
+    my $serv = (split /\s+/, $ {$$CONF{'local server'}}[0])[0];
+    LockShared();
+    my ($pl,$ol) = ParsePacklists;
+    my $am = ParseAutomount;
+    my $pack;
+    my $localonly = ((scalar grep {$_ eq '--localonly'} @ARGV) > 0);
+    my $all = ((scalar grep {$_ eq '--all'} @ARGV) > 0);
+
+    # date INDEX
+
+    # do some intensive datacollection
+
+    my $pdb_cache;
+    $pdb_cache = SEPP::Index::index_read("$DIR{'sepp'}/html/.pdbcache") unless $all;
+
+    my @alphapack = (sort keys %$am); # list everythin in the automount list
+    my %pdb ;
+    my %catl;
+    $|=1;
+    my $tasksize = scalar @alphapack;
+    foreach $pack (@alphapack) {
+        print "- Reading Packs: ",$tasksize--,"    \r";
+        next if $localonly and not defined $$am{$pack}{$serv}; # skip non local packages
+        next unless -x "$DIR{sepp}/stub/$pack"; #ignore things which are not yet installed
+	#next if -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE"; # ignore REMOVABLE packs
+
+        $pdb{$pack}{apppage} = $DIR{'sepp'}."/html/$pack.html";
+        $pdb{$pack}{make_apppage} = 1;
+
+        # incremental webbbuild
+        if(! $all and -e $pdb{$pack}{apppage} 
+	   and defined $pdb_cache->{$pack}{lastup}) {
+	  my $server;
+	  if(defined $$ol{$pack}) {
+            $server = $$ol{$pack};
+          }
+          else {
+	    $server = undef; #ther is no original server
+	    # if we don't know the original, lets find the latest update
+	    foreach my $srv (keys %{$$pl{$pack}}) {
+	      $server = $srv unless defined $server;
+	      if ($$pl{$pack}{$srv}[1] gt $$pl{$pack}{$server}[1]) {
+		$server = $srv;
+	      }
+	    }
+	  }
+          if (not defined $server) {
+              Warning "Couldn't find server for $pack\n";
+              delete $pdb{$pack};
+              next;
+          }
+	  my $lastup = $$pl{$pack}{$server}[1] || undef;
+	  if (not defined $lastup) {
+	    print "$pack $server $lastup\n";
+	  } 
+	  if($lastup le $pdb_cache->{$pack}{lastup}) {
+	     $pdb{$pack}{make_apppage} = 0;
+	     $pdb{$pack}{lastup}=$pdb_cache->{$pack}{lastup};
+	     $pdb{$pack}{fullname}=$pdb_cache->{$pack}{fullname};
+	     $pdb{$pack}{version}=$pdb_cache->{$pack}{version};
+             $pdb{$pack}{shortdesc}=$pdb_cache->{$pack}{shortdesc};
+             $pdb{$pack}{cat}=$pdb_cache->{$pack}{cat};
+	     map {push @{$catl{$_}} , $pack} 
+		  (split /\s*,\s*/, $pdb_cache->{$pack}{cat});
+             next;
+          }
+	  Info "ReReading Information on $pack";
+	} else {
+	  Info "Adding Information on $pack";
+        }
+        if (not -r "$DIR{'pack'}/$pack/SEPP/CHANGES") {
+            Info "Skipping $pack (can't access $DIR{'pack'}/$pack/SEPP/CHANGES)";
+            delete $pdb{$pack};
+            next;
+        }; # skip packs which are not installed or aren't accessible.
+
+        my $changes = ReadCHANGES $pack;
+        Error "Can't parse CHANGES FILE of $pack" #'
+            unless $$changes{'history'}[-1] =~ /^(\d\d\d\d-\d\d-\d\d)\s+(.+)/;
+        $pdb{$pack}{lastup} = "$1:$2";
+
+        Error "Can't parse CHANGES FILE of $pack" #'
+            unless $$changes{'history'}[0] =~ /^(\d\d\d\d-\d\d-\d\d)\s+(.+)/;
+        $pdb{$pack}{created} = "$1:$2";
+
+        if ($pdb{$pack}{lastup} lt $pdb{$pack}{created} ) {
+            $pdb{$pack}{created} = $pdb{$pack}{lastup};
+            $pdb{$pack}{lastup} = $1;
+        }
+
+        $pdb{$pack}{created} =~ s/:.+//g;
+        $pdb{$pack}{lastup} =~ s/:(.+)//g;
+        $pdb{$pack}{lastcomm} = "";
+        $pdb{$pack}{lastcomm} = $1 if $1;
+
+        $pdb{$pack}{readme} = README2html $pack;
+
+        my $MT = ReadMETA $pack;
+        $pdb{$pack}{fullname} = $$MT{'package name'}[0];
+        $pdb{$pack}{version} = $$MT{'package version'}[0];
+        $pdb{$pack}{shortdesc} = $$MT{'one line description'}[0];
+        $pdb{$pack}{maintainer} = $$MT{'maintainer'}[0];
+        $pdb{$pack}{maintainer} =~ s/</&lt;/g;
+        $pdb{$pack}{maintainer} =~ s/>/&gt;/g;
+        $pdb{$pack}{maintainer} =~ s/&lt;([^\@]+\@[^&]+)&gt;/&lt;<a href=\"mailto\:$1\?subject=$pdb{$pack}{fullname}-$pdb{$pack}{version}\">$1<\/a>&gt;/g;
+        map {$_ =~ s/\s/&nbsp;/g} @{$$MT{'local support'}};
+        $pdb{$pack}{support} = join (" ",  @{$$MT{'local support'}});
+        $pdb{$pack}{support} =~ s/</&lt;/g;
+        $pdb{$pack}{support} =~ s/>/&gt;/g;
+        $pdb{$pack}{support} =~ s/&lt;([^\@]+\@[^&]+)&gt;/&lt;<a href=\"mailto\:$1\?subject=$pdb{$pack}{fullname}-$pdb{$pack}{version}\">$1<\/a>&gt;/g;
+        $pdb{$pack}{urls} = join (", ", @{$$MT{'urls'}});
+        if (-d "$DIR{'sepp'}/html/$pack") {
+            $pdb{$pack}{urls} = "<A HREF=\"$pack\"><B>Local Docs</B></A>, ".
+                $pdb{$pack}{urls};
+        }
+        $pdb{$pack}{urls} .= ", <A HREF=\"$pack.SEPP/\">SEPP Dir</A>";
+        $pdb{$pack}{urls} .= ", <A HREF=\"$pack.SEPP/INSTALL\">INSTALL</A>";
+
+        $pdb{$pack}{os} = join ("<BR>", @{$$MT{'operating system'}});
+        $pdb{$pack}{cat} = join (", ", @{$$MT{'categories'}});
+        map {push @{$catl{$_}} , $pack} @{$$MT{'categories'}};
+        $pdb{$pack}{bins} = join ",&nbsp; ", (map {"<TT>$_</TT>"} (ScanForBins $pack));
+    }
+    my $p;
+    print "\n";
+    Info "Building Webpages ...";
+    SEPP::Index::index_write(\%pdb, "$DIR{'sepp'}/html/.pdbcache");
+
+    # index-title
+    unlink $DIR{'sepp'}."/html/index-title.html";
+    open (DL, ">".$DIR{'sepp'}."/html/index-title.html") or
+	Error ("Opening $DIR{'sepp'}/html/index-title.html: $!");
+    print DL <<"XX";
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+      "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<BODY BGCOLOR=white>
+<TABLE WIDTH="100%" CELLSPACING="2" CELLPADDING="2" BORDER="0"><TR>
+<TD WIDTH="90%"><DIV ALIGN="center"><IMG SRC="sepplogo.gif"></DIV></TD>
+<TD WIDTH="10%"><B>for $seppdomain</B></TD>
+</TR></TABLE>
+</BODY></HTML>
+XX
+#<DIV ALIGN=center><IMG SRC="sepplogo.gif"> for $seppdomain</DIV>
+
+    # date
+    unlink $DIR{'sepp'}."/html/index-date.html";
+    unlink $DIR{'sepp'}."/html/report-date.html";
+    open (INDEX, ">".$DIR{'sepp'}."/html/index-date.html") or
+	Error ("Opening $DIR{'sepp'}/html/index-date.html: $!");
+    open (REPORT, ">".$DIR{'sepp'}."/html/report-date.html") or
+	Error ("Opening $DIR{'sepp'}/html/report-date.html: $!");
+    print INDEX (HTMLHead "Date Index", "display"),
+    "<DIV CLASS=\"indextitle\">Date Index</DIV>",
+    "<DIV CLASS=\"zoom\">",
+    "<A HREF=\"report-date.html\" TARGET=\"_parent\">Zoom!</A>",
+    "</DIV>",
+    "<DIV CLASS=\"switch\">",
+    "<A HREF=\"index-alpha.html\" TARGET=\"index\">Alpha</A>",
+    "&nbsp;|&nbsp;",
+    "Date",
+    "&nbsp;|&nbsp;",
+    "<A HREF=\"index-cat.html\" TARGET=\"index\">Category</A>",
+    "</DIV>";
+    print REPORT (HTMLHead "Date Index", "_self"),
+    "<H1>Date Index</H1>\n",
+    "<TABLE>\n";
+    my $cdate = "";
+    foreach $p (sort {$pdb{$b}{lastup} cmp $pdb{$a}{lastup} } keys %pdb) {
+	if ($cdate ne $pdb{$p}{lastup}) {
+	    $cdate = $pdb{$p}{lastup};
+	    print INDEX "<DIV CLASS=\"section\"><B>$cdate</B></DIV>\n";
+	    print REPORT "<TR><TD><DIV CLASS=\"section\"><B>$cdate</B></DIV></TD>\n";
+	}
+	print INDEX "<DIV CLASS=\"item\"><A HREF=\"$p.html\">".
+	    "<IMG SRC=\"seppsheet.gif\" border=0 width=8 height=10 ".
+	      "ALT=\"$pdb{$p}{fullname} / $pdb{$p}{shortdesc}\">&nbsp;$p".
+		"</A></DIV>\n";
+	print REPORT "<TR><TD VALIGN=top><A CLASS=item HREF=\"$p.html\"><small>$p</small></A></TD>",
+	  "<TD VALIGN=top><small>$pdb{$p}{shortdesc}</small></TD></TR>\n";
+    }
+    print INDEX "</BODY></HTML>\n";
+    print REPORT "</TABLE></BODY></HTML>\n";
+    close INDEX;
+    close REPORT;
+
+    # alpha
+    unlink $DIR{'sepp'}."/html/index-alpha.html";
+    unlink $DIR{'sepp'}."/html/report-alpha.html";
+    open (INDEX, ">".$DIR{'sepp'}."/html/index-alpha.html") or
+	Error ("Opening $DIR{'sepp'}/html/index-alpha.html: $!");
+    open (REPORT, ">".$DIR{'sepp'}."/html/report-alpha.html") or
+	Error ("Opening $DIR{'sepp'}/html/report-alpha.html: $!");
+    print INDEX (HTMLHead "Alpha Index", "display"),
+    "<DIV CLASS=\"indextitle\">Alpha Index</DIV>",
+    "<DIV CLASS=\"zoom\">",
+    "<A HREF=\"report-alpha.html\" TARGET=\"_parent\">Zoom!</A>",
+    "</DIV>",
+    "<DIV CLASS=\"switch\">",
+    "Alpha",
+    "&nbsp;|&nbsp;",
+    "<A HREF=\"index-date.html\" TARGET=\"index\">Date</A>",
+    "&nbsp;|&nbsp;",
+    "<A HREF=\"index-cat.html\" TARGET=\"index\">Category</A>",
+    "</DIV>";
+    print REPORT (HTMLHead "Alpha Index", "_self"),
+    "<H1>Alpha Index</H1>\n",
+    "<TABLE>\n";
+    my $letter = "";
+    foreach $p (sort keys %pdb) {
+            if ($letter ne substr $p, 0,1) {
+	    $letter = substr $p, 0,1;
+	    print INDEX "<DIV CLASS=\"section\"><B>".uc($letter)."</B></DIV>\n";
+	    print REPORT "<TD><DIV CLASS=\"section\"><B>".uc($letter)."</B></DIV></TD>\n";
+	}
+	print INDEX "<DIV CLASS=\"item\"><A HREF=\"$p.html\">".
+	    "<IMG SRC=\"seppsheet.gif\" border=0 width=8 height=10 ".
+	      "ALT=\"$pdb{$p}{fullname} / $pdb{$p}{shortdesc}\">&nbsp;$p".
+		"</A></DIV>\n";
+	print REPORT "<TR><TD VALIGN=top><A CLASS=item HREF=\"$p.html\"><small>$p</small></A></TD>",
+	  "<TD VALIGN=top><small>$pdb{$p}{shortdesc}</small></TD></TR>\n";
+    }
+    print INDEX "</BODY></HTML>\n";
+    close INDEX;
+    print REPORT "</TABLE></BODY></HTML>\n";
+    close REPORT;
+
+    # category
+    unlink $DIR{'sepp'}."/html/index-cat.html";
+    unlink $DIR{'sepp'}."/html/report-cat.html";
+    open (INDEX, ">".$DIR{'sepp'}."/html/index-cat.html") or
+	Error ("Opening $DIR{'sepp'}/html/index-cat.html: $!");
+    open (REPORT, ">".$DIR{'sepp'}."/html/report-cat.html") or
+	Error ("Opening $DIR{'sepp'}/html/report-cat.html: $!");
+    print INDEX (HTMLHead "Category Index", "display"),
+    "<DIV CLASS=\"indextitle\">Category Index</DIV>",
+    "<DIV CLASS=\"zoom\">",
+    "<A HREF=\"report-cat.html\" TARGET=\"_parent\">Zoom!</A>",
+    "</DIV>",
+    "<DIV CLASS=\"switch\">",
+    "<A HREF=\"index-alpha.html\" TARGET=\"index\">Alpha</A>",
+    "&nbsp;|&nbsp;",
+    "<A HREF=\"index-date.html\" TARGET=\"index\">Date</A>",
+    "&nbsp;|&nbsp;",
+    "Category",
+    "</DIV>";
+    print REPORT (HTMLHead "Category Index", "_self"),
+    "<H1>Category Index</H1>\n",
+    "<TABLE>\n";
+
+    my $c;
+    foreach $c (sort keys %catl) {
+      my $c_html;
+      ($c_html = $c) =~ s/&/&amp;/;
+      print INDEX "<DIV CLASS=\"section\"><B>".uc($c_html)."</B></DIV>\n";
+      print REPORT "<TR><TD><DIV CLASS=\"section\"><B>".uc($c_html)."</B></DIV></TD></TR>\n";
+      foreach $p (sort @{$catl{$c}}){
+	print INDEX "<DIV CLASS=\"item\"><A HREF=\"$p.html\">".
+	    "<IMG SRC=\"seppsheet.gif\" border=0 width=8 height=10 ".
+	      "ALT=\"$pdb{$p}{fullname} / $pdb{$p}{shortdesc}\">&nbsp;$p".
+		"</A></DIV>\n";
+	print REPORT "<TR><TD VALIGN=top><A CLASS=item HREF=\"$p.html\"><small>$p</small></A></TD>",
+	  "<TD VALIGN=top><small>$pdb{$p}{shortdesc}</small></TD></TR>\n";
+      }
+    }
+    print INDEX "</BODY></HTML>\n";
+    close INDEX;
+    print REPORT "</TABLE></BODY></HTML>\n";
+    close REPORT;
+
+    #app pages
+
+    foreach $pack (sort keys %pdb) {
+      my $i = \%{$pdb{$pack}};
+        if(! $i->{make_apppage}) { next; }
+        unlink $i->{apppage};
+        open (DL, ">".$i->{apppage}) or
+            Error ("Opening $pdb{$pack}{apppage}: $!");
+      print DL HTMLHead "$i->{fullname} $i->{version}", "_top";
+      my $cat_html;
+      ($cat_html = $i->{cat}) =~ s/&/&amp;/;
+      print DL <<"XX";
+<H1>$i->{fullname} $i->{version}</H1>
+
+<TABLE CELLSPACING=2 CELLPADDING=2 BORDER=0>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r2>Description:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l2>$i->{shortdesc}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r1>Maintainer:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l1>$i->{maintainer}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r2>Created:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l2>$i->{created}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r1>Updated:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l1>$i->{lastup} ($i->{lastcomm}) </TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r2>Support:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l2>$i->{support}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r1>Links:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l1>$i->{urls}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r2>OS:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l2>$i->{os}</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r1>Categories:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l1>$cat_html</TD></TR>
+<TR VALIGN=top><TD WIDTH="80" CLASS=r2>Binaries:&nbsp;</TD>
+               <TD WIDTH="100%" CLASS=l2>$i->{bins}</TD></TR>
+</TABLE>
+<DIV CLASS=readmetitle>More Info</DIV>
+<TABLE BORDER=0 CELLPADDING=1 CELLSPACING=0 BGCOLOR="black"><TR><TD>
+<TABLE BORDER=0 CELLSPACING=0 CELLPADDING=10><TR><TD BGCOLOR="white">
+${$i->{readme}}
+</TD></TR></TABLE></TABLE>
+</BODY></HTML>
+XX
+
+      close DL;
+    }
+    print "\n";
+    Unlock();
+}
+
+sub prefix_bundle ()
+  {
+    my $pack = shift @ARGV;
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+
+    require osx_stubber;
+    osx_stubber::prefix_bundle($pack,@ARGV);
+  }
+
+
+# get the local packlist and update it with the latest info about the package
+sub UpdateLocalPacklist ( $ ) {
+    my $pack = shift @_;
+    my $localpath = GetLocalPath $pack;
+    return 0 unless $localpath;
+    my $autopath = DiskToAuto($localpath);
+    my $META = ValidatePack $pack;
+    my $changes = ReadCHANGES $pack;
+    Error "Can't parse CHANGES FILE of $pack" #'
+      unless $$changes{'history'}[-1] =~ /^(\d\d\d\d-\d\d-\d\d)/;
+    my $date = $1;
+    my $type = "m";
+    if (-f "$localpath$pack/SEPP/ORIGINAL") {
+	$type = "H";
+    }
+    my $localpacklist = (split /\s+/, $ {$$CONF{'local server'}}[0])[1];
+    my $packlist = SlurpFile $localpacklist;
+    my @newpack = grep !m|/$pack\s|, @$packlist;
+    push @newpack, "$type $date $autopath$pack\t$$META{'one line description'}[0]\n";
+    DumpFile $localpacklist, \@newpack;
+    return 1;
+}
+
+sub HTMLMouse ($) {
+$_[0] =~ s/'//g; #'
+return <<"XX";
+onMouseOver="self.status = '$_[0]'; return true"
+onMouseOut="self.status = ''; return true"
+XX
+}
+
+sub HTMLHead ($$) {
+  return <<XX;
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+      "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>$_[0]</TITLE>
+<STYLE type="text/css"><!--
+    BODY {color: black; background-color: white; font-size: 12pt;
+          font-family: Helvetica, Arial, sans-serif}
+
+    H1   {font-size: 18pt; font-weight: bold}
+    DIV.section {font-size: 10pt; margin-top: 1.5ex; margin-bottom: 0.3ex}
+    DIV.item {margin-left:0.5em; font-size: 10pt}
+    DIV.switch {border-width: thin; text-align: right; font-size: 10pt; margin-bottom: 6ex}
+    DIV.switch A:link {text-decoration: none}
+    DIV.zoom {color: red; text-align: right; margin-bottom: 3px; font-size: 10pt}
+    DIV.zoom A:link {text-decoration: none}
+    DIV.indextitle {font-size: 16pt; font-weight: bold; margin-bottom: 5px}
+    DIV.item A:link {text-decoration: none}
+    DIV.readmetitle {font-weight: bold; font-size: 13pt; margin-top: 2ex; margin-bottom: 0.7ex}
+    TD.r1 {color: black; background-color: white; font-style: italic; text-align: right;}
+    TD.r2 {color: black; background-color: white; font-style: italic; text-align: right;}
+    TD.l1 {color: black; background-color: #efefef; text-align: left;}
+    TD.l2 {color: black; background-color: #e0e0ff; text-align: left;}
+    TT    {font-size: 12pt; font-family: "Lucida Sans Typewriter", courier, fixed}
+-->
+</STYLE>
+<BASE TARGET="$_[1]">
+</HEAD>
+<BODY>
+XX
+}
+# netscape is buggy:
+# DIV.readme {border-width: thin; padding: 0.7em}
+
+sub ParseAutomount () {
+    my %auto;
+    open(AM, "<$DIR{'sepp'}/conf/autosepp_indirect")
+	or Error "Opening $DIR{'sepp'}/conf/autosepp_indirect $!";
+    while (<AM>) {
+	my @line = split /\s+/;
+	my $pack = shift @line;
+	next if $pack =~ /\.mirrormount\./; #kick out mirror mounts ..
+	my $mount;
+	foreach $mount (@line) {
+	    $mount =~ /^([^:]+):([^&]+)/;
+	    my $path = "/$2/";
+	    my $server = $1;
+	    $path =~ s|//|/|g;
+	    $auto{$pack}{$server}=$path;
+	}
+    }
+    close AM;
+    return \%auto;
+}
+
+sub StoreAutomount ( $ ) {
+    my $auto = shift @_;
+    my $pack;
+    my $server;
+    unlink "$DIR{'sepp'}/conf/autosepp_indirect.new";
+    unlink "$DIR{'sepp'}/conf/autosepp_indirect_afswrite.new";
+    open AM, ">$DIR{'sepp'}/conf/autosepp_indirect.new"
+	or Error "Opening $DIR{'sepp'}/conf/autosepp_indirect.new $!";
+    open AMA, ">$DIR{'sepp'}/conf/autosepp_indirect_afswrite.new"
+	or Error "Opening $DIR{'sepp'}/conf/autosepp_indirect_afswrite.new $!";
+    foreach $pack (sort keys %{$auto}){
+	print AM $pack;
+	print AMA $pack;
+	if ($pack =~ /\.mirrormount\./) {
+	    print AM " ",$$auto{$pack};
+	    print AMA " ",WritableAfs($$auto{$pack});
+	} else {
+	  my @servers = (keys %{$$auto{$pack}});
+	  my $localserver = (split /\s+/, $ {$$CONF{'local server'}}[0])[0];
+	  # if one of the servers is 'localhost' drop the rest
+          # make sure it is first in the list
+          if (grep {$_ eq 'localhost'} @servers) {
+	    @servers = ('localhost', grep {$_ ne 'localhost'} @servers);
+	  }
+
+          # if one of the servers is our local server, keep only localhost
+          # and the local server
+          if (grep {$_ eq $localserver} @servers) {
+            @servers = grep {$_ eq $localserver or $_ eq 'localhost'} @servers;
+	  }
+
+	  foreach $server (@servers) {
+		$$auto{$pack}{$server} = "/".$$auto{$pack}{$server}."/";
+		$$auto{$pack}{$server} =~ s|//+|/|g;
+		print AM "\t$server:$$auto{$pack}{$server}&";
+		print AMA WritableAfs("\t$server:$$auto{$pack}{$server}&");
+	    }
+	}
+	print AM "\n";
+	print AMA "\n";
+    }
+    close AM;
+    close AMA;
+    rename ("$DIR{'sepp'}/conf/autosepp_indirect.new",
+	    "$DIR{'sepp'}/conf/autosepp_indirect");
+    rename ("$DIR{'sepp'}/conf/autosepp_indirect_afswrite.new",
+	    "$DIR{'sepp'}/conf/autosepp_indirect_afswrite");
+
+    if($OS eq "darwin")
+      {
+	system "/usr/sepp/sbin/osx_update_mounts"
+	  and Warning("Could not reload Automounter table");
+      }
+}
+
+# read an array and return the pointer
+sub SlurpFile ( $ )
+{
+    my $file = shift @_;
+    my @lines;
+    open SF, "<$file" or Error "Open $file: $!";
+    chomp(@lines = <SF>);
+    close SF;
+    return \@lines;
+};
+
+# write file to disk, given a name and a pointer to an array
+sub DumpFile ($$)
+{
+    my ($file,$lines) = @_;
+    Error "renaming $file to ${file}~: $!"
+	unless rename $file, $file."~";
+    unlink "$file";
+    open SF, ">$file"
+	or Error "Writing to $file";
+    my $line;
+    for $line (@$lines) {
+	chomp($line);
+        next if $line =~ /^\s*$/;
+	print SF $line,"\n";
+    }
+    close SF;
+}
+
+# make sure a pack is more or less correctly installed ...
+sub ValidatePack ( $ ){
+    my $pack = $_[0];
+    if (not -d "$DIR{'pack'}/$pack") {
+	Error "package '$pack' does not exist\n";
+    }
+    CheckFirstLine $pack, qw/CHANGES INSTALL META README start.pl/;
+    ReadCHANGES $pack;
+    README2html $pack;
+    return ReadMETA $pack;
+}
+
+sub Usage ( ) {
+    print "
+USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
+       seppadm install package [--default | --force]
+       seppadm remove package [--final | --usrsepp]
+       seppadm mirror package [--force]
+       seppadm mirrorupdate
+       seppadm expose package
+       seppadm report [--datesort] [--showremoved]
+       seppadm webbuild [--localonly] [--all]
+       seppadm prefix_bundle package pathname...
+
+       Release: 1.4.2
+
+";
+	 exit 0;
+}
+
+sub FindBin ( $ ) {
+    my $bin = $_[0];
+    my $path;
+    foreach $path (@PATH) {
+	return $path if -x "$path/$bin" && -f "$path/$bin";
+    }
+    return undef;
+}
+
+sub FindMan ( $ ) {
+    my $man = $_[0];
+    $man =~ /\.([^.]+)$/;
+    my $ext = $1;
+    my $path;
+    foreach $path (@MANPATH) {
+	return "$path/man$ext" if -e "$path/man$ext/$man";
+    }
+    return undef;
+}
+
+# get main SEPP config file
+sub ReadSEPPconf () {
+
+    my(%RULES)=
+	('remote server'
+	 => {'expected a hostname' => 'm/^(?:localhost|[-a-z0-9]+(?:\.[-a-z0-9]+)+)(?:\(\d+\))?\s+(\S+)$/i' #,
+#	     'packlist does not exist' => 'm|(\S+)$| and (-e $1)',
+#	     'packlist is not world readable' => 'm|(\S+)$| and ((stat $1)[2] & 0004)'
+	     },
+
+	 'local server'
+	 =>{'LC:one' => 1,
+	    'expected a hostname' => 'm/^(?:localhost|[-a-z0-9]+(?:\.[-a-z0-9]+)+)\s+(\S+)$/i',
+	    'packlist does not exist' => 's|(/afs/)([^\.])|$1\.$2|; m|(\S+)$| and (-e $1)',
+	    'packlist must be world readable'=> 's|(/afs/)([^\.])|$1\.$2|; m|(\S+)$| && ((stat $1)[2] & 0004)'},
+
+	 'preferred operating system'
+	 =>{'LC:one' => 1,
+	    'not a known operating system'
+	    => 'm/^(?:sunos|solaris|hpux-9|hpux-10|aix-3|aix-4|linux|osf1|irix-5|irix-6|irix64|darwin)$/' },
+
+	 'sepp disks'
+	 =>{'LC:many' => 0,
+	    'directory does not exist'=> 's|(/afs/)([^\.])|$1\.$2|; -d "$_/."'},
+
+	 'compile shell'
+	 =>{'LC:one' => 1,
+	    'shell is not an executable'=> '-x $_'},
+
+	 'perl interpreter'
+	 =>{'LC:one' => 1,
+	    'perl is not an executable'=> '-x $_'},
+
+	 'sepp user'
+	 =>{'LC:one' => 1,
+	    'unknown user'=> 'defined getpwnam $_ || $_ eq "IGNORE"'},
+
+	 'compile env'
+	 =>{'LC:many' => 0,
+	    'ENVIRONEMNT=xxxx expected'=> 'm|\S+\s*=\s*\S+|'}
+
+	);
+
+    return ReadConf "$DIR{'sepp'}/conf/sepp.conf", %RULES;
+}
+
+sub CheckDir ( $ ) {
+    Error "Directory ".$_[0]." does not exist." unless (-d "$_[0]/.");
+}
+
+sub CheckAccessDir ( $ ) {
+    Error "Directory ".$_[0]." is not writable." unless (WritableDirTest "$_[0]/.");
+}
+
+# read standard sepp-style configfile
+sub ReadConf ($\%) {
+    my($file,$RULES)=@_;
+    my @known_sect = keys %{$RULES};
+    my $sect;
+    my $error;
+    my %CONF;
+    open CF,$file
+	or Error "opening $file: $!";
+
+    while(<CF>){
+
+	chomp;
+	# support multiline
+        while (s/\\$//) {
+	  my $cont = <CF>;
+	  $cont =~ s/^\s+//;
+
+	  $_ .= $cont;
+	  chomp;
+	}
+
+	s/\s+$//; s/\s+/ /g; s/^\s+//;
+
+	(/^#/ or /^\s*$/)
+	    and next;
+
+	/^\*\*\*\s*([^=]+?)\s*\*\*\*/
+	    and do {
+		$sect = lc($1);
+		@{$CONF{$sect}} = qw();
+		(grep {$_ eq $sect}  @known_sect) or
+		    Error "Unknown section '$sect' in $_[0]";
+		next;
+	    };
+
+	next unless $sect;
+	push @{$CONF{$sect}}, $_;
+    }
+    close CF;
+    foreach $sect (@known_sect) {
+	Error "in $file '$sect':
+      expected one or no config line\n"
+	    if (defined $$RULES{$sect}{'LC:bool'}
+		and defined $CONF{$sect}
+		and 1 < scalar @{$CONF{$sect}});
+
+	Error "in $file '$sect':
+      expected exactly one config line\n"
+	    if (defined $$RULES{$sect}{'LC:one'}
+		and (not defined $CONF{$sect}
+		     or 1 != scalar @{$CONF{$sect}}));
+
+	Error "in $file '$sect':
+      one or several config lines expected\n"
+	    if (defined $$RULES{$sect}{'LC:many'}
+		and not defined $CONF{$sect});
+
+	Warning "in $file the '*** $sect ***' section is missing:
+      at least the section header must be present\n"
+	    if (not exists $CONF{$sect});
+
+      foreach (@{$CONF{$sect}}){
+        foreach $error (keys %{$$RULES{$sect}}) {
+	  next if $error =~ /^LC:/; #ignore linecount directives
+	  Error "in '$_':
+      $error
+      refer to section '$sect' of $file"
+	      unless eval ($$RULES{$sect}{$error});
+      }
+  }
+    }
+    close CF;
+    return \%CONF;
+}
+
+# makes sure there is a vaild sepprc
+sub CheckSEPPrc (){
+    my(%svars);
+    my(@known) = qw(seppdomain maildomain inetdomain httpproxy ftpproxy popserver imapserver smtpserver);
+    foreach (@known) { $svars{$_} = 1; }
+    open SEPPRC,"$DIR{'sepp'}/conf/sepprc.system"
+	or Error "opening $DIR{'sepp'}/conf/sepprc.system: $!";
+    # test that the the first lines contain for each @known variable
+    # a line like "$maildomain = 'ee.ethz.ch';", after all variables
+    # are verified, exit (code could be executed after these assignements
+    # to change the variables based on special conditions)
+    while (<SEPPRC>) {
+      next if /^\s*#/;
+      next if /^\s*$/;
+      Error "$_ is not a valid sepprc line"
+        unless /^\$([a-z]+)\s*=\s*\'([^']*)\'\;\s*($|#)/ && defined $svars{$1};
+      $seppdomain = $2 if $1 eq 'seppdomain';
+      delete $svars{$1};
+      last unless keys(%svars);
+    }
+    close SEPPRC;
+    Error join(' ', keys(%svars)) . " missing in sepprc" if keys(%svars);
+}
+
+# find application partition with most free space
+sub FindFreePartition (){
+    my $seldisk;
+    my $curdisk;
+    my $selfree = 0;
+    for $curdisk (@{$$CONF{'sepp disks'}}) {
+        my $curfree;
+        if ($curdisk =~ m|^/afs/| && $PROG{fs}) {
+            my $curused;
+            ($curfree, $curused) = (split /\s+/, qx|$PROG{fs} $curdisk|)[7,8];
+            Error "Could not determine Space on '$curdisk'"
+            unless $curfree =~ /^\d+$/;
+            $curfree -= $curused;
+        } else {
+            $curfree = (split /\s+/, qx|$PROG{df} $curdisk|)[10];
+            Error "Could not determine Space on '$curdisk'"
+            unless $curfree =~ /^\d+$/;
+        }
+        if ( $selfree < $curfree) {
+            $seldisk = $curdisk;
+            $selfree = $curfree;
+        }
+    }
+    return $seldisk;
+}
+
+# do we have a valid application name?
+sub CheckAppName ( $ ){
+  Error "Please define a package name" unless defined $_[0];
+  Error "Package Name `$_[0]` is not valid (name-vers-maint)."
+    unless $_[0] =~ m|^([-_a-z0-9]+)-([_\.a-z0-9]*\d[_\.a-z0-9]*)-([a-z]+)$| ;
+  return $1,$2,$3;
+}
+
+sub CheckDependency($) {
+    my ($dep) = @_;
+    my $dep_pack;
+    if($dep =~ /^(\S+)\s*:\s*([^\s,]+(?:\s*,\s*[^\s,]+)*)$/) {
+        $dep_pack = $1;
+        my @dep_arch = split(/\s*,\s*/,$2);
+        my $is_my_arch=0;
+        for my $a (@dep_arch) {
+            defined $platform_triplets{$a} or do {
+                warn "ERROR: platform $a unknown\n";
+                return 0;
+            };
+            my $dep_OS = $platform_triplets{$a}{OS};
+            $is_my_arch = 1 if $OS eq $dep_OS;
+        }
+        return 1 unless $is_my_arch;
+    }
+    else {
+        $dep_pack = $dep;
+    }
+
+    return -d $DIR{'pack'} . '/' . $dep_pack ? 1 : 0;
+}
+
+# load and the the META file of an application
+sub ReadMETA ( $ ) {
+  my $pack = $_[0];
+  # LC:one -> exactly one line required
+  # LC:many -> 1 or many lines required
+  my(%RULES)=
+    ('package name' =>
+     {'LC:one'=>0,
+      'longer than 40 characters' => 'length($_) < 40',
+      'less than 2 characters' => 'length($_) >= 2'},
+
+     'package version' =>
+     {'LC:one'=>0,
+      'longer than 20 characters' => 'length($_) < 21',
+      'less than 1 characters' => 'length($_) > 0'},
+
+     'one line description' =>
+     {'LC:one'=>0,
+      'longer than 60 characters' => 'length($_) < 60',
+      'less than 15 characters' => 'length($_) > 15'},
+
+     'maintainer' =>
+     {'LC:one'=>0,
+      'not in "Full Name <email@address.org> [phone]" format'
+      => 'm|^\S.+\s<[^@>]+@[^>]+>|'},
+
+     'local support' =>
+     {'LC:many'=>0,
+      'not in "Full Name <email@address.org> [phone]" format'
+      => 'm|^\S.+\s<[^@>]+@[^>]+>|'},
+
+     'license' =>
+     {'LC:one'=>0,
+      'must be one of limited, unlimited, free, world'
+      => 'm/^(?:limited|unlimited|free|world)$/'},
+
+     'license contact' =>
+     {'not in "Full Name <email@address.org> [phone]" format'
+      => 'm|^\S.+\s<[^@>]+@[^>]+>|'},
+
+     'urls' =>
+     {'not in "<A HREF="http://x.y.z">Demo</A>" format'
+      => 'm|^<A HREF="[a-z]+://[^"]+">[^<]+</A>|i'},
+
+     'categories' =>
+     {'LC:many'=>0,
+      'not a known category'
+      => 'm/^(?:system|sci&eng|programming|internet|graphics|multimedia|fun|text|office)$/'},
+
+     'operating system' =>
+     {'LC:many'=>0,
+      'not a known operating system'
+      => 'm/^(?:sunos|solaris|hpux-9|hpux-10|aix-3|aix-4|linux|osf1|irix-5|irix-6|irix64|darwin)/'},
+
+     'binaries' =>
+     {"can't find bin directory"
+      => 'm|^>?>?(.+)/[^/]+| && -d "'.$DIR{'pack'}.'/'.$pack.'/$1"'},
+
+     'manpages' =>
+     {"can't find man directory"
+      => 'm|^(.+)/[^/]+| && -d "'.$DIR{'pack'}.'/'.$pack.'/$1"'},
+
+     'vartmpl' =>
+     {"can't find vartmpl directory"
+      => 'm|^(.+)$| && -d "'.$DIR{'pack'}.'/'.$pack.'/$1"'},
+
+     'html doc root' =>
+     { "can't find html doc root"
+      => '-d "'.$DIR{'pack'}.'/'.$pack.'/$_"',
+      "can't find index.html doc root"
+      => '-f "'.$DIR{'pack'}.'/'.$pack.'/$_/index.html"'},
+
+     'depends on' =>
+     {"depends on above mentioned pack which is not installed"
+      => 'CheckDependency($_)'},
+
+     'alarm' =>
+     {"not a vaild alarm line"
+      => 'm|^\d\d\d\d-\d\d-\d\d\s[^<]+<[^@]+@[^>]+>\s.+|'}
+    );
+  return ReadConf "$DIR{'pack'}/$pack/SEPP/META", %RULES;
+}
+
+sub ReadCHANGES ( $ ){
+  my $pack = $_[0];
+  my(%RULES)=
+    ('history' =>
+     {'LC:many'=>0,
+      'changelog entry not in proper format YYYY-MM-DD description of change'
+      => 'm|\d\d\d\d-\d\d-\d\d\s\S|'}
+    );
+  return ReadConf "$DIR{'pack'}/$pack/SEPP/CHANGES", %RULES;
+}
+
+# convert a sepp readme to html
+sub README2html ( $ ){
+  my $pack = $_[0];
+  my $out = "";
+  my @nest;
+  open(README,"$DIR{'pack'}/$pack/SEPP/README")
+    or Error "opening $DIR{'pack'}/$pack/SEPP/README: $!";
+
+  my $bf = 0;
+  my $tt = 0;
+  while (<README>) {
+    chomp;
+    next if /^#/;
+    s/>/&gt;/g;
+    s/</&lt;/g;
+    s/\"/&quot;/g;
+    s/\s+$//g;
+    $bf == 0 && s/(^|\s)_(\S)/$1<B>$2/g && do {$bf = 1};
+    $bf == 1 && s/(\S)_($|\s)/$1<\/B>$2/g && do {$bf = 0};
+    $tt == 0 && defined $nest[0] && s/(^)\|(\S)/$1<BR><TT>$2/g && do {$tt = 1};
+    $tt == 0 && s/(^|\s)\|(\S)/$1<TT>$2/g && do {$tt = 1};
+    $tt == 1 && s/(\S)\|($|\s)/$1<\/TT>$2/g && do {$tt = 0};
+
+    /^\*\s+(.+)/ && do {
+      if (not @nest or $nest[0] ne 'LI') {
+	unshift @nest, 'UL';
+	$out .= "<UL>\n";
+      }
+
+      if ($nest[0] eq 'LI') {
+	shift @nest;
+	$out .= "</LI>\n";
+      }
+
+      unshift @nest, 'LI';
+      $out .= "<LI>$1";
+      next;
+    };
+    /^[0-9]+\.\)\s+(.+)/ && do {
+      if (not @nest or $nest[0] ne 'LI') {
+	unshift @nest, 'OL';
+	$out .= "<OL>\n";
+      }
+
+      if ($nest[0] eq 'LI') {
+	shift @nest;
+	$out .= "</LI>\n";
+      }
+
+      unshift @nest, 'LI';
+      $out .= "<LI>$1";
+      next;
+    };
+
+    /^$/ && do {
+    if (not defined $nest[0]) {
+      $out .= "<P>";
+      #unshift @nest, "P";
+    }
+      while (@nest) {
+	$out .= "</".(shift @nest).">";
+	$bf = 0; $tt=0 ;
+      }
+
+     # $out .= "\n\n";
+      next;
+    };
+
+    $out .= "\n".$_;
+
+  }
+  close README;
+  while (@nest) {
+    $out .= "</".(shift @nest).">";
+  }
+  $out .= "\n";
+  return \$out;
+}
+
+# has the very first line of the file been remove to
+# point out that the file has been edited.
+sub CheckFirstLine ($@){
+  my($pack) = shift @_;
+  my($file);
+  foreach $file (@_){
+    open FILE, "<$DIR{'pack'}/$pack/SEPP/$file"
+      or Error "opening $DIR{'pack'}/$pack/SEPP/$file: $!";
+    Error "you have not properly customized
+      $DIR{'pack'}/$pack/SEPP/$file
+      The first line is still in the file, untouched."
+      if <FILE> =~ m|REMOVE THIS LINE|;
+    close FILE;
+  }
+}
+
+sub Info ( $ ) {
+  print "- $_[0]\n";
+}
+
+sub Tip ( $ ) {
+  print "\\\n#> $_[0]\n/\n";
+}
+
+sub Error ( @ ) {
+  die "\n>>ERROR<< ".(join "\n       <<",@_)."\n\n";
+}
+
+sub Warning ( $ ) {
+  warn "\nWARNING ".$_[0]."\n\n";
+}
+
+sub ParsePacklists () {
+  my %packlist;
+  my %origlist;
+  my $line;
+  foreach $line ( $ {$$CONF{'local server'}}[0], @{$$CONF{'remote server'}}) {
+      my($server,$packlist)= split /\s+/, $line;
+      open PACKLIST,"<$packlist"
+	  or  do {if ($packlist eq ${$$CONF{'local server'}}[0]) {
+			Error "opening local Packlist $packlist: $!";
+		    } else {
+			Warning "opening remote Packlist $packlist: $!" 
+				if $>  == (getpwnam ${$$CONF{'sepp user'}}[0])[2];
+			next;
+		}};
+      while (<PACKLIST>) {
+	  chomp;
+	  if (/^(m|H)\s+(\d\d\d\d-\d\d-\d\d)\s+(\/\S+\/)([^\/\s]+)\s+(.*)$/) {
+	      CheckAppName $4;
+	      $packlist{$4}{$server} = [$1,$2,$3,$5];
+	      # 0:H|m 1:data 2:path 3:description
+              if($1 eq 'H') {
+                   $origlist{$4} = $server;
+              }
+	  } else {
+	      Warning "Can't parse Line '$_'\nfrom $packlist";
+	  }
+      }
+  }
+  close PACKLIST;
+  return (\%packlist, \%origlist);
+}
+
+sub GetLocalPath ( $ ) {
+    my ($pack) = @_ ;
+    my $curdisk;
+    for $curdisk (@{$$CONF{'sepp disks'}}) {
+	if (-f "$curdisk/$pack/SEPP/start.pl") {
+	    return "$curdisk/";
+	}
+    }
+    return undef;
+}
+
+sub MakeStub ( $ ) {
+  my $pack = $_[0];
+  unlink "$DIR{'sepp'}/stub/$pack";
+  open STUB,">$DIR{'sepp'}/stub/$pack"
+    or Error "writing $DIR{'sepp'}/stub/$pack: $!";
+  print STUB <<"XX";
+#!$$CONF{'perl interpreter'}[0]
+BEGIN{\$Pack='$pack';
+unshift \@INC, '$DIR{'sepp'}/sbin';}
+use SeppStart;
+\$s = "\$PackDir/SEPP/start.pl";
+die "SEPP Error: Can't access \$s\\n" unless -x \$s;
+do \$s;
+die "SEPP Error: \$@\\n" if \$@;
+XX
+  close STUB;
+  chmod 0755, "$DIR{'sepp'}/stub/$pack";
+}
+
+sub StubLink ( $$$$ ) {
+    my ($pack,$bin,$default,$forced) = @_;
+    if (FindBin($bin)) {
+        if ($forced) {
+            Warning "Install of $bin forced. A binary with this name does exist already";
+        } else {
+            Warning "Can't install $bin. A binary with this name does exist already";
+            return;
+        }
+    }
+    chdir "$DIR{'sepp'}/bin";
+    if ($default and -e $bin) {
+        #Info "Unlinking old $bin";
+        unlink "$bin" if $default;
+    }
+    if (-e $bin) {
+        Warning "Can't install $bin
+            there is already a file with this name in $DIR{'sepp'}/bin";
+    } else {
+        Info "Stub Linking $bin";
+        symlink "../stub/$pack", $bin
+            or Warning "Can't install $bin in $DIR{'sepp'}/bin: $!";
+    }
+}
+
+sub SymLink ( $$$$ ) {
+    my ($packbin,$seppbin,$default,$forced) = @_;
+    if (FindBin($seppbin)) {
+        if ($forced) {
+            Warning "Install of $seppbin forced. A binary with this name does exist already";
+        } else {
+            Warning "Can't install $seppbin. A binary with this name does exist already";
+            return;
+        }
+    }
+    chdir "$DIR{'sepp'}/bin";
+    unlink "$seppbin" if $default;
+    if (-e $seppbin) {
+        Warning "Can't install $seppbin
+            there is already a file with this name in $DIR{'sepp'}/bin";
+    } else {
+        Info "Sym Linking $DIR{'pack'}/$packbin $seppbin";
+        symlink "$DIR{'pack'}/$packbin", $seppbin
+            or Warning "Can't install $seppbin in $DIR{'sepp'}/bin: $!";
+    }
+}
+
+sub ManLink ( $$$$$ ) {
+    my ($pack,$path,$man,$default,$forced) = @_;
+    $man =~ /\.([^.]+)$/;
+    my $ext = $1;
+    if (FindMan($man)) {
+        if ($forced) {
+            Warning "Install of $man forced. A manpage with this name does exist already";
+        } else {
+            Warning "Can't install $man. A manpage with this name does exist already";
+            return;
+        }
+    }
+
+    chdir "$DIR{'sepp'}/man";
+    mkdir "man$ext", 0755  unless -d "man$ext";
+    Error "can't create $DIR{'sepp'}/man/man$ext"
+        unless -d "man$ext";
+    chdir "man$ext";
+    unlink "$man" if $default;
+    if (-e "$man") {
+        Warning "Can't install $man
+            there is already a file with this name in $DIR{'sepp'}/man/man$ext";
+    } else {
+        Info "Sym Linking $DIR{'sepp'}/man/man$ext/$man";
+        symlink "$DIR{'pack'}/$pack/$path", $man
+            or Warning "Can't install $man in $DIR{'sepp'}/man/man$ext: $!";
+    }
+}
+
+sub ScanForBins($){
+  my $pack = $_[0];
+  my ($packname,$packversion,$packauthor) = CheckAppName $pack;
+
+  my $bin = $DIR{'sepp'}."/bin/";
+  opendir READ, "$bin" or Error "opendir $bin $!";
+  my @files = readdir(READ);
+  closedir READ;
+  my @execs;
+  my $f;
+  foreach $f (@files) {
+    if (-l $bin.$f && (readlink $bin.$f) =~ m%/$pack($|/)%){
+      push @execs, $f
+    }
+  }
+  #print "execs = ", join(', ', (sort @execs)), "\n";
+
+  my %exl;
+  my $p;
+  # make sure only the shortest name of the binary shows up
+  foreach $p (sort @execs) {
+    if ($p =~ m|^(.*)-$packversion-$packauthor$|i) {
+        $exl{$1} = $p if (not defined $exl{$1}) or (length $exl{$1} > length $p);
+    } elsif ($p =~ m|^(.*)-$packversion$|i) {
+        $exl{$1} = $p if (not defined $exl{$1}) or (length $exl{$1} > length $p);
+    } else {
+        $exl{$p} = $p
+    }
+  }
+  return sort values %exl;
+}
+
+sub CleanTree($$){
+    my($start,$pack) = @_;
+    my $entry;
+    opendir READ, "$start"
+	or Error "opendir $start: $!";
+    my @files = readdir(READ);
+    closedir READ;
+    while (defined ($entry = shift @files)) {
+	my $cp = "$start/$entry";
+	next if $entry =~ /^\.\.?$/;
+	CleanTree($cp,$pack) if ! -l $cp && -d $cp;
+	if (-l $cp){
+	    my $link = readlink $cp;
+	    if ($link =~ m|/$pack|){
+		#Info "unlink $cp -> $link";
+		unlink $cp;
+	    }
+	}
+    }
+}
+
+sub SaneShell ($) {
+  my $packname = shift @_;
+  my $line;
+  foreach $line (@{$$CONF{'compile env'}}) {
+    $line =~ m|^\s*(\S+)\s*=\s*(.+?)\s*$| || Warning "Can't parse $line";
+    my $string = $2;
+    my $var = $1;
+    $string =~ s|{SEPP}|$DIR{'sepp'}|g;
+    $string =~ s|{PATH}|$ENV{PATH}|g;
+    $string =~ s|{HOME}|$ENV{HOME}|g;
+    $string =~ s|{PACKDIR}|$packname|g;
+    $string =~ s|{PACK}|$packname|g;
+    $ENV{$var}=$string;
+  }
+
+  chdir "$DIR{'pack'}/$packname";
+  exec $$CONF{'compile shell'}[0];
+}
+
+sub DiskToAuto ($) {
+    my $dir = shift;
+
+    $dir =~ m|^/afs/| && do { $dir =~ s|^(/afs/)\.|$1|; return $dir; };
+
+    my @df = split /\s+/, qx|$PROG{df} $dir|;
+    my $remote = $df[7];
+    my $local  = $df[12];
+
+    my @remote_split = split /:/, $remote;
+
+    if($#remote_split == 1) {
+	my $remote_disk = $remote_split[1];
+	my $remote_dir = $dir;
+        $remote_dir =~ s/^$local/$remote_disk/;
+        return $remote_dir;
+    } else{
+      return $dir;
+    }
+}
+
+sub ChangeToSepp () {
+  if (${$$CONF{'sepp user'}}[0] ne 'IGNORE' ) {
+    my ($uid,$gid)  = (getpwnam ${$$CONF{'sepp user'}}[0])[2,3];
+    ($>,$<) = ($uid,$uid); # if we are running as root this will
+    ($),$() = ($gid,$gid); # give us the correct uid/gid
+    Error "Make sure you are running seppadm as ". ${$$CONF{'sepp user'}}[0] .
+      " ($uid/$gid)" unless $> == $uid and $< == $uid;
+    chdir '/';
+  }
+  #Make sure we can edit the sepp dir
+  CheckAccessDir "$DIR{'sepp'}/bin";
+  CheckAccessDir "$DIR{'sepp'}/man";
+  CheckAccessDir "$DIR{'sepp'}/stub";
+  CheckAccessDir "$DIR{'sepp'}/html";
+  CheckAccessDir "$DIR{'sepp'}/conf";
+  CheckAccessDir "$DIR{'sepp'}/var";
+}
+
+sub CheckOpts (@) {
+  my (@PArg) = @_;
+  foreach my $arg (@ARGV) {
+    next unless $arg =~ /^--(.+)/;
+    Error "Argument --$1 does not make sense here\n"
+      unless grep {"--$_" eq $arg} @PArg;
+  }
+}
+
+sub WritableAfs ($) {
+  my $dir = shift;
+  # afs rule
+  $dir =~ s|\slocalhost:/afs/([^\.])|\tlocalhost:/afs/.$1|;
+  #dfs rule
+  $dir =~ s|\slocalhost:/\.\.\./([^/]+/fs)/(.*)|\tlocalhost:/.../$1/.rw/$2|;
+  return $dir;
+}
+
+sub EnsureNewDir ($) {
+    my $dir = $_[0];
+
+    if (-e "$dir") {
+      Error "Package directory $dir exists and is NOT a directory"
+	if ! -d "$dir";
+      opendir D, "$dir";
+      my @cnt = readdir D;
+      close D;
+      Error "Package directory $dir exists already and is not empty"
+	if 2 != scalar @cnt;
+    } else {
+      Error "The DFS Volume $dir must be created OFFLINE"
+	if $dir =~ m|^/\.\.\./|;
+      Error "Failed to create Package Directory $dir: $!"
+	unless mkdir "$dir", 0755;
+    };
+
+}
+
+# -w does not work reliably for afs and friends ... so lets
+# try creating a file;
+sub WritableDirTest ($) {
+  my $dir = shift;
+  my $testfile = "$dir/.$$.".time.".writetest";
+  if (not -d $dir) {
+    Warning "The Directory $dir does not exit\n";
+    return 0;
+  }
+  if (not (open D, ">$testfile" and -f $testfile)) {
+    Warning "Can't create testfile $testfile\n";
+    return 0;
+  }
+  close D;
+  if (not unlink $testfile) {
+    warn "Can't remove write test file\n";
+    return 0;
+  }
+  return 1;
+}
+
+# use Fcntl ':flock';
+# Standlaone, minimal perl under Solaris --> No Fcntl.pm available.
+
+# Locking for seppadm instances. To protect the critical functionality
+# of seppadm, a lock around the different functions of seppadm is 
+# implemented (e.g. install, webbuild,...) 
+#
+# These locks prevent concurrent instances of seppadm that could destroy
+# part of the configuration information.
+#
+# The handle LOCKFILE is opened during one of the lock operations and
+# then needs to be released in Unlock();
+
+sub LockShared() {
+    open LOCKFILE, "<$DIR{'sepp'}/conf/.seppadm.lock" or 
+      Error "Could not open $DIR{'sepp'}/conf/.seppadm.lock for reading";
+    if(not flock (LOCKFILE,1|4)) #LOCK_SH|LOCK_NB
+      {
+	Error "Could not flock $DIR{'sepp'}/conf/.seppadm.lock : $!" 
+	  unless $! == 11; #$!{EAGAIN};
+	Info "Other instance of seppadm is running. Waiting for lock";
+	flock (LOCKFILE,1) or
+	  Error "Failed to lock $DIR{'sepp'}/conf/.seppadm.lock$!";
+	Info "Received lock";
+      }
+}
+
+sub LockExclusive() {
+    open LOCKFILE, ">>$DIR{'sepp'}/conf/.seppadm.lock" or 
+      Error "Could not open $DIR{'sepp'}/conf/.seppadm.lock for writing";
+    if(not flock (LOCKFILE,2|4)) #LOCK_EX|LOCK_NB
+      {
+	Error "Could not flock $DIR{'sepp'}/conf/.seppadm.lock : $!" 
+	  unless $! == 11; #$!{EAGAIN};
+	Info "Other instance of seppadm is running. Waiting for lock";
+	flock (LOCKFILE,2) or
+	  Error "Failed to lock $DIR{'sepp'}/conf/.seppadm.lock$!";
+	Info "Received lock";
+      }
+  }
+
+sub Unlock() {
+  flock (LOCKFILE,8) or #LOCK_UN
+    Error "Failed to unlock $DIR{'sepp'}/conf/.seppadm.lock$!";
+  close LOCKFILE;
+}
+
+
+# vi: sw=4 et

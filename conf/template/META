@@ -1,0 +1,132 @@
+## REMOVE THIS LINE WHEN YOU HAVE EDITED THIS FILE ############
+#
+###############################################################
+# The META file contains structured information about the 
+# package. It is read by seppadm whenever some operation is
+# performed on this package.
+###############################################################
+#
+# all the values shown below are dummy entries which should 
+# explain what to write into the fields they must be
+# adapted to fit the installed package. Lines starting with a
+# hash (#) are ignored by seppadm.
+#
+*** package name ***
+The full name of the package
+#
+*** package version ***
+version.number
+#
+*** one line description ***
+type a ONE LINE description of the package (max 60 char)
+#
+*** maintainer ***
+Email Address <of@the.maintainer>
+#
+*** local support ***
+Address Of <local@person.who.can.help.with.this.package>
+Address Of <other@local.person.who.helps>
+#
+*** license ***
+# pick one of the following licensing schemes
+#
+# everyone may use this. If you call 'seppadm expose' on the
+# package everyone can (using sepprsync)
+world
+#
+# Unlimited use within the organization (site license)
+unlimited
+#
+# Limited number of licenses available
+limited
+#
+# This product is available for free. It does not mean
+# that this is an Open Source product, only that no licensing
+# restricts the distribution of this product through SEPP.
+free
+#
+*** license contact ***
+Who to contact <if@the.licenses.run.out>
+#
+*** urls ***
+# Important urls for this package - tutorials, home page. This
+# information will be listed in the SEPP Application List
+# web site.
+<A HREF="http://catholic.heaven.org/~john.pope">Homepage</A>
+<A HREF="ftp://no.no.no.thatcher.uk/no/demopack">FTP Home</A>
+#
+*** operating system ***
+# which OSes are supported by the package. The examples given below are
+# the minimal requirement, but perferably you should enter the exact
+# type of os you are runnning. Eg: 'solaris-2.5.1 sparc sun4u' or
+# 'hpux-10.20 9000 735'
+sunos
+solaris
+hpux-9
+hpux-10
+aix-3
+aix-4
+linux
+osf1
+irix-5
+irix-6
+irix64
+darwin
+#
+*** categories ***
+# pick the categories that apply to the package
+system
+sci&eng
+programming
+internet
+graphics
+multimedia
+fun
+text
+office
+#
+*** binaries ***
+# list of binaries provided by the package. The file name part
+# may contain a regular expression the path part is relative to
+# the installation root of the package
+bin/demo.+
+# normally SEPP starts its apps through a wrapper script. With
+# interpreter languages, which are referenced in
+# #!/usr/sepp/bin/lang scripts-headers this does not work. Use
+# '>>' as a prefix to make SEPP omit the wrapper layer for 
+# certain binaries.
+>>bin/perl
+#
+*** manpages ***
+# the same procedure as for binaries applies to manpages
+man/man1/.+
+man/man5/.+
+
+*** vartmpl ***
+# the contents of the specified directory will be copied to
+# /usr/sepp/var/packname-ver.sion-maint. The package has to
+# take care that symbolic links point to this directory where
+# appropriate.
+template
+#
+*** html doc root ***
+# this directory will be linked with a symlink into the 
+# /usr/sepp/html tree. It must at least contain an index.html
+# file
+html
+#
+*** depends on ***
+# when installing this package, seppadm will verify that the
+# packages mentioned in this section are also installed on the
+# local system. Package dependencies should be prevented
+# whenever possible.
+miracles-1.45.2-ak
+#
+*** alarm ***
+# the alarm feature (not implemented) will make sepp send a
+# mail to the person mentioned at the date specified. This can
+# be used to notify the maintainer of the package about a
+# license which will soon expire ...
+#YYYY-MM-DD email address <to@send.mail.to> contents of mail
+#
+###############################################################

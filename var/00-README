@@ -1,0 +1,4 @@
+If a package needs extra local configuration files they will reside in this
+directory. After installing such an application you will have to update the
+template files copied into this directory ...
+

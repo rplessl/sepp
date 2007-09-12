@@ -1,0 +1,114 @@
+SEPP - Software Deployment System
+---------------------------------
+Installation instructions
+=========================
+by Tobias Oetiker <oetiker@ee.ethz.ch> (2006-02-08.1)
+
+
+* create a SEPP install directory and give it to your
+  local SEPP user. All SEPP applications will be installed
+  as that user. Note that you MUST use the directory /usr/sepp
+  as long as you want to share SEPP packages with other people.
+  Often software relies on absolute path-names.
+
+  # mkdir /usr/sepp; cd /usr/sepp
+  # adduser sepp
+  # chown sepp /usr/sepp 
+  # su - sepp
+
+* unpack the SEPP base installation into the /usr/sepp directory. 
+  (the % character shows that the following things should be done
+  as the SEPP user)
+
+  % cd /usr/sepp
+  % wget http://www.sepp.ee.ethz.ch/pub/sepp-1.4.2.tar.Z -O - | gunzip |tar xf -
+
+* add the platform binaries. If you already have local installations of
+  rsync and perl then you just add symbolic links:
+
+  % cd /usr/sepp
+  % ln -s /usr/bin/rsync sbin/rsync
+  % ln -s /usr/bin/perl sbin/perl
+
+  if your system has no perl and rsync then you can use the platform
+  binaries from the SEPP website:
+
+  % cd /usr/sepp
+  % wget http://www.sepp.ee.ethz.ch/pub/sepp.sbin.i686-debian-linux3.1.tar.gz -O - | gunzip |tar xf -
+
+* the next step is to setup your package repository. If you have only one
+  SEPP partition, then this is simple:
+
+  # mkdir /usr/pack
+  # chown sepp /usr/pack
+
+  If you are planning on a larger deployment where each SEPP package could
+  be on a different partition or even a different host, then you have to
+  setup the automounter to dynamically build /usr/pack based on the content
+  of /usr/sepp/conf/autosepp_master this is quite system dependent. On
+  Solaris you do
+  
+  # echo +/usr/sepp/conf/autosepp_master >>/etc/auto_master
+  # automount -v
+
+  On other systems you may want to use a program mount or some other means
+  since SEPP assumes that a new /usr/pack directory will become visible as
+  soon as it is added to the automount map. Check out conf/sepp.pl for
+  program mounts. It works on Solaris and Linux.
+
+* If you went down the automount path, you have to create a local package
+  store:
+
+  # mkdir /usr/pack-store-a
+  # chown sepp /usr/pack-store-a
+
+* SEPP has to know some things about your system so that it can work
+  properly. These settings are all stored in /usr/sepp/conf/sepp.conf
+
+  % cd /usr/sepp/conf  
+
+  % cp sepp.conf-dist sepp.conf
+  
+  or if you work on a simple standalone system (no automount)
+ 
+  % cp sepp.conf-standalone sepp.conf
+
+  Now edit the file with an editor of your choice and make any changes you
+  see fit.
+
+  % vi sepp.conf
+
+  A second config file is read at run-time by all sepp packages, providing
+  them with some basic information about your system.
+
+  % cp sepprc.system-dist sepprc.system
+  % vi sepprc.system
+
+* Make sure your  SEPP.packlists exists where sepp.conf says it should. And touch
+  yourself an autosepp_indirect file into existence.
+
+  % touch /usr/sepp/SEPP.packlist
+  % touch /usr/sepp/conf/autosepp_indirect
+
+* You can now either start building your own sepp packages following the
+  instructions in html/seppdoc.pdf or you can use sepp-get to fetch some
+  packages of our public package server. Prepare your sepp-get.conf file and
+  you are ready to go:
+
+  % cd /usr/sepp/conf
+  % cp sepp-get.conf-dist sepp-get.conf
+  % vi sepp-get.conf
+
+  get a list of available packages
+
+  % /usr/sepp/sbin/sepp-get search .
+  
+  Install a package
+
+  % /usr/sepp/sbin/sepp-get install joe-3.3-to
+
+If you are lucky to work in an environment where other people are using SEPP
+as well, you might want to talk to them about connecting your SEPP setup
+with theirs using their packlist (this requires an automount setup).
+
+ 

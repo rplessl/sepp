@@ -1,0 +1,76 @@
+SEPP - Software Deployment System
+---------------------------------
+Additional Installation instructions for MacOSX
+===============================================
+by Anton Schultschik <aschults@ee.ethz.ch> (2006-04-04)
+
+* Follow the standard installation as documented in the README file.
+
+* Make sure the Mac specific binaries are available:
+  
+  % cd /usr/sepp
+  % wget http://www.sepp.ee.ethz.ch/pub/sepp.sbin.powerpc-apple-darwin7.4.1.tar.gz -O - | gunzip |tar xf -
+
+* Create two new local users (Use System Preferences -> Accounts)
+
+  - User "local"  (normal plain user, owner of all packages. NOTE: some SEPP-Packages do an onwnership test)
+  - User "install" (user with admin rights to install files on the systsm)
+
+  NOTE: These users need to be present for all client systems (in case of an NFS-based SEPP installation)
+
+* Then, edit the file "/etc/sudoers" (e.g. visudo) and add the following lines:
+
+    # buildhost (macosx_sepp_client). Allows introducing local mounts.
+    ALL  ALL = NOPASSWD: /usr/sepp/sbin/osx_image_mount_root
+    ALL  ALL = (install) NOPASSWD: /usr/sepp/sbin/osx_local_start_local
+
+  This is a safe way for SEPP packages to run scripts with admin priviliges
+
+  NOTE: /etc/sudoers needs to be modified on all SEPP client machines (in case of an NFS-based SEPP installation)
+
+* Create additional directories for Image mounts:
+
+  % mkdir -p /var/sepp/mount
+
+* Create some symlinks:
+
+  - /Applicaitons/Network to /usr/sepp/macosx/Applications --> More convenient access for users
+  - /Network/Applications to /usr/sepp/macosx/Applications --> Allows Finder to register the
+    applications on "Network" domain. (see 
+    /System/Library/Frameworks/ApplicationServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+    for manual registration of applications)
+  - /Library/Preferences/Network to /usr/sepp/macosx/Library/Preferences (Application read their Network-domain
+    prefs from this location)
+  - /Network/Library to /usr/sepp/macosx/Library/ for other access to Network-domain Library paths
+
+NFS-based SEPP client
+=====================
+by Anton Schultschik <aschults@ee.ethz.ch> (2006-04-04)
+
+Unfortunately, the C<automount> daemon of Darwin is not compatible with the
+Solaris and Linux versions: It does not recognize indirect maps and it also
+doesn't reread its configuration, ignoring changes in the map files. The two
+problems were solved through the script C</usr/drwho/sbin/osx_update_mounts>
+which is started on the client machine and converts the current
+C</usr/sepp/conf/autosepp_indirect> from the server to
+C</var/sepp/autosepp_indirect.osx> on the client machine. After the
+conversion, the automounter is instructed to reload the table using C<kill
+-HUP>.
+
+The script is regularily executed via C<cron> and can be manually started by
+the C<local> user. The automount reload (C<kill -HUP>) is done via a
+StartupItem called Automount (call to
+"/System/Library/StartupItems/Automount/Automount reload")
+
+Add these steps for SEPP NFS client installation:
+
+* add the following lines to /etc/sudoers:
+
+    # buildhost (macosx_sepp_client). Allows introducing local mounts.
+    local  ALL = NOPASSWD: /usr/sepp/sbin/osx_update_mounts_root ""
+
+* Add a Startupitem "Automount" under /System/Library/StartupItems
+  (see http://www.osxfaq.com/Tutorials/LearningCenter/HowTo/Startup/index.ws
+   for details) the script needs to understand "reload" as first argument.
+
+

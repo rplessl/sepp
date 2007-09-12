@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/sudo /usr/sepp/sbin/osx_update_mounts_root $1

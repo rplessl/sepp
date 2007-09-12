@@ -1,0 +1,3 @@
+To decouple the applications from their automount points, A stup files is
+generated for each package. The stubs life here ...
+

@@ -1,0 +1,23 @@
+###############################################################
+# Global config file for all sepp wrapper scripts. The values
+# defined in here are available in the start.pl wrapper scripts
+# to allow the proper configuration of some values which are
+# not easily determined otherwhise. See the SeppStart manpage
+# for more information on this.
+###############################################################
+
+# Used as a marker in sepp syslog events. Should identify
+# local installation. 
+$seppdomain = 'isg-net'; 
+
+# general configuration values which can be used from
+# start.pl files by prepending $CF:: to the variable name
+# for ex: $CF::maildomain.
+ 
+$maildomain = 'ee.ethz.ch';
+$inetdomain = 'ee.ethz.ch';
+$httpproxy  = 'proxy.ee.ethz.ch:3128';
+$ftpproxy  = 'proxy.ee.ethz.ch:3128';
+$popserver = 'pop.ee.ethz.ch';
+$imapserver = 'imap.ee.ethz.ch';
+$smtpserver = 'smtp.ee.ethz.ch';

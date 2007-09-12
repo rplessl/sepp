@@ -1,0 +1,27 @@
+## REMOVE THIS LINE WHEN YOU HAVE EDITED THIS FILE ############
+
+############################
+# Description of the package
+############################
+
+Type a longer description of the package and possibly some
+information for new users on how to get started with the
+program and how further help can be obtained.
+
+In order to make it simple to parse this text please follow
+these guidelines when writing the README file.
+
+* separate paragraphs by one empty line. 
+* lists should look like this
+* to _emphasize_ a word add a underscore to the begin and 
+  the end of the word.
+
+1.) enumerated lists look
+2.) like this
+
+# lines starting with a hash are comments and will be ignored.
+
+Mark |commands| with vertical bares. They force
+a typewriter font when the README is converted to HTML.
+
+###############################################################

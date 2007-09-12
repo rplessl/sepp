@@ -1,0 +1,16 @@
+*** macosx binaries ***
+# Add the path(s) You want to map/copy to the sepp/macosx/Applications
+# directory. Note: The directory structure of the Paths/Apps You indicate
+# is preserved.
+#
+# For Every App-Bundle found in the indicated paths or below, an OSX-Stub
+# is created in the proper subdir of sepp/macosx/Applications.
+#
+# Every document is represented by a symbolic link.
+#
+# Directories are searched recursively, and their content stubbed/symlinked
+# like before.
+#
+# Example:
+powerpc-apple-darwin7.4.1/Applications/.*
+powerpc-apple-darwin7.4.1/myapp.app

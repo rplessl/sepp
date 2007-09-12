@@ -1,0 +1,3 @@
+Include this directory available on your webserver. To update it's
+contents run seppadm webbuild.
+ 

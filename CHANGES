@@ -1,0 +1,471 @@
+* seppadm: chdir to / when switching user since the original directory
+  may not be readable (eg /root)
+
+2006-05-01
+----------
+* released 1.4.2
+* sepp-get fix rsync error
+* documentation for MacOS-X
+
+2006-03-03
+----------
+* released 1.4.1
+* fixed locking problem on seppadm remove
+* sepp-get fixes
+
+2006-02-08
+----------
+* released 1.4.0
+* changed versioning scheme to a linux-like version instead of the timestamp
+* changed format of sepp-get's index.txt file
+* added support for platform-specific dependencies. For example:
+  ncurses-5.5-mo : i686-debian-linux3.1, sun4u-sun-solaris2.8
+
+2006-02-08
+----------
+* released 20060208
+* Integrated sepp-get (former sepprsync)
+* Improved Install Instructions
+* Added sepp.conf sample for standalone system
+* write out dependencies when exposing a package
+
+2006-02-07
+----------
+* released 20060207
+* Added Support for OS X (see README.OSX)
+* Added support for web-publishing applications with license 'world' using the new
+  seppadm expose command. This works together with the sepprsync application
+  from http://isg.ee.ethz.ch/tools/sepprsync
+* Improved Base Population for SEPP directores (INSTALL, INSTALL.lib, start.pl)
+* New Authorize.pm module to implement a simple license checking system
+
+---
+2001-09-18
+----------
+* released 20000324pl16
+* report removed packages only if '--showremoved' is specified (telling if a
+  package is removed does require all packages to be accessed and thus makes
+  the report much slower)
+
+2001-08-10
+----------
+* released 20000324pl15
+* really read ~/.sepprc in SeppStart.pm (didn't work until now)
+
+2001-08-10 Matthias Braendli <braendli@iis.ee.ethz.ch>
+----------
+* speling
+* fix error in regular expression for hostname
+* {PACKDIR} in sepp.conf should really be {PACK}: replace {PACK}
+  too and make sepp.conf more clear about it
+* allow code after variables definitions in sepprc.system
+
+2001-08-10 Peter Bircher <peter.bircher@inf.ethz.ch>
+----------
+* added 'perl interpreter' to sepp.conf: it will be used to generate the stubs
+* mailto: links in HTML generated for packages
+* AFS fixes
+
+2001-07-03
+----------
+* really fix Binaries list in HTML pages
+
+2001-06-14
+----------
+* use 'R' instead of 'I' in report for installed but removed packages
+
+2001-06-12
+----------
+* fix Binaries list in HTML pages
+* released 20000324pl14
+
+2001-04-24
+----------
+* remove REMOVABLE if a package is installed again after having been removed
+* add '/' suffix to "HREF=$pack.SEPP" in generated html
+
+2001-04-05
+----------
+* set DISPLAY and XAUTHORITY in conf/.cshrc
+
+2001-03-18
+----------
+* fix starting of programs with name that contains two '-'
+* released 20000324pl13
+
+2001-03-17
+----------
+* fixed seppadm prepare pathname/pack
+* released 20000324pl12
+
+2001-03-15 tobi
+----------
+* modified autosepp_indirect processing
+  - localhost will always be first
+  - if localserver is in the list it will stay to gether with localhost,
+    rest has to go
+  - else all entries stay
+
+2000-09-13
+----------
+* fixed "undefined values" in webbuild
+* released 20000324pl10
+
+2000-08-07
+----------
+* added 'use strict'
+* added folding markers
+* released 20000324pl9
+
+2000-05-24
+----------
+* delete automount entry for packages that cannot be installed because
+  the platform doesn't match.
+* released 20000324pl8
+
+2000-05-11
+----------
+* --shellonly didn't only start the shell :-( An 'exit' was missing.
+* released 20000324pl7
+
+2000-05-10
+----------
+* --force will also install already existing manpages.
+* released 20000324pl6
+
+2000-05-09
+----------
+* readded <BASE TARGET=...> elements in the HTML output (App Index).
+  Now links in app-page open in whole browser and not in frame.
+* made App Index generation more tolerant to unaccessible packages (will skip
+  then now, instead of aborting)
+* released 20000324pl5
+
+2000-05-02
+----------
+* readded check for already existing package when a seppadm prepare (without
+  --shellonly) is made.
+* released 20000324pl4
+
+2000-04-29
+----------
+* some minor enhancements in App. Catalog
+* CheckSEPPrc only called once.
+* released 20000324pl3
+
+2000-04-28
+----------
+* made "SEPP Application Catalog" HTML4 compliant
+* added "Zoom" for each index in App. Catalog.
+* added "sepp domain" to the title of the App. Catalog.
+* use of tables instead of DIV and CSS for borders in app-pages of App.
+  Catalog (Netscape Communicator didn't display the border correctly in some
+  cases).
+* --all wasn't accepted as parameter to webbuild.
+* released 20000324pl2
+
+2000-04-06
+----------
+* branched from 20000324
+* fixed horrible bug introduced with the 2000-03-24 "fix". Now a random number
+  is used in .mirrormount entries. Hopefully it will work reliably now. (ds)
+* released 20000324pl1 (new versioning scheme)
+
+2000-03-24
+----------
+* fixed too long .mirrormount entries. (ds)
+
+2000-03-23
+----------
+* new official maintainer: David Schweikert (ds, dws@ee.ethz.ch)
+* _original in packlist isn't anymore used, but another separate hash is
+  used to find the server of the original copy (ds)
+* fixed bug in 'seppadm install --force' (matsf@init.se)
+
+2000-03-18
+----------
+* removed broken _original entries from the automount_idirect file
+* only have the local host in the automount_idirect if it
+  is among the pack providers
+
+2000-03-09
+----------
+* nicer onscreen feedback when doing webbuild
+
+2000-03-06
+----------
+* Added Incremental webbuild (David)
+* if you set 'sepp user' to IGNORE, seppadm will not try to change user anymore
+* allow for lowervase <href a= .... in META
+* added new html page 'report'
+
+2000-02-29
+----------
+* Removed logical errors from the readme file
+
+2000-02-21
+----------
+* improved AFS support: properly handle existing pack dirs, test writability
+  by actually 'writing'
+
+* links in sepp web point to target _TOP so no more windows all over the place ...
+  
+2000-02-16
+----------
+* introduced autosepp_master_ro for machines which only consume packages
+
+2000-02-15
+----------
+* Fix handling of binaries including a - in their name for cases where
+  there is also a binary without the dash ...
+
+2000-01-28
+----------
+* Added install instructions to the README
+
+2000-01-27
+----------
+* allow report non sepp user to run the report tool
+
+* stricter option checking
+
+* make sure a pack is avaliable for a certain OS
+
+* added --force option to update a mirror even if the CHANGES file would not
+  warrent this.
+
+**** AFS Support for Sepp ... using loopback mounts (lofs) ****
+
+* for file systems mounted with afs, the 'server' must be called 'localhost'
+
+* in order to be able to edit replicated packets stored on AFS, use the
+  /usr/sepp/conf/automount_indirect_afswrite automount map
+
+* packages stored on AFS require their install directory to be created before hand
+
+* automount entries with server localhost are NON-REDUNDANT as the redundancy is
+  created in AFS
+
+* Creating Package directories for New Packages and Mirrors must be done outside
+  sepp so we have to provision for this in seppadm.
+
+* Removing volumes in AFS will not work either same story as above 
+
+2000-01-25 David Schweikert <dws@tik.ee.ethz.ch>
+----------
+* various fixes and optimisations (tik adaption)
+
+2000-01-04
+----------
+* Only warn on missing section headers ... don't die ...
+
+1999-12-21
+----------
+* Check all section headers in config files are present .. 
+
+1999-11-19
+----------
+* Work correctly with pack disks mounted on the local server
+  under a different path then where they are located originally (David Schweikert <dws@tik.ee.ethz.ch>)
+
+* make sure uname is found even if a the path is not set correctly
+ 
+1999-11-11
+----------
+* max length of package version in MEAT raised to 21 chars
+
+1999-10-11
+----------
+* executables are identified with -x && -f 
+
+1999-06-11
+----------
+* AppRun does now exit with the exit and not only return ... 
+
+1999-05-30
+----------
+* added install link
+
+1999-04-18
+----------
+* allowed underscores on package versions
+
+1999-04-15
+----------
+* fixed writability testing to work with solaris 2.6 automounted directories ... 
+  -w xxxx/. is much better than -w xxxx
+
+1999-03-16
+----------
+* added --seppdebug and --seppenv options to wrapper script module. 
+  This can now be used with ann sepp aplication to find ourt where 
+  the actual binary lives ... 
+
+1999-03-03
+----------
+* new option for remove --usrsepp which removes evidence of the program 
+  from /usr/sepp
+
+1999-02-19
+----------
+* relaxed availability requirements for remote packlists. Sepp will 
+  now just issue a waring if it misses one.
+
+1998-12-23
+----------
+* elmar added --force option
+
+1998-11-06
+----------
+* --shellonly was missing form usage message ... 
+
+1998-11-05
+----------
+* "seppadm mirror" and "seppadm mirrorupdate" did not
+  update the timestamp in the local packlist.
+
+1998-11-03
+----------
+* switched to rsync for copying ... you must retreive a new bin package
+  when you upgrade to this version ... rsync has the advantag that it works
+  correct even with links and files deleted on the original ... 
+
+* added --shellonly option to prepare. Use this to 'enter' the
+  install shell for a package which has already been prepared ...
+
+1998-10-29
+----------
+* added --localonly option to webbuild, to build the website so that
+  only the pysically on the local machine installed packages are visible ... 
+
+
+1998-10-19
+----------
+* added return value to AppRun. The return code of the
+  Called binary.
+ 
+1998-10-14
+----------
+* fixed logger entry in SeppStart.pm so that it works if the
+  it is found in /usr/bsd as seen on Irix
+
+1998-10-13
+----------
+* mirror update should work now ... :-) interesting noone noticed ... 
+* Fixed Error message for missing email addresses in META file
+* Andi Karrer added support for AIX, OSF1, HPUX 10
+
+1998-09-01
+----------
+
+* version numbers of 10 characters should work ... 
+* added IRIX64 support
+
+1998-08-28
+----------
+* added info message for exected permission error when mirroring
+* changed title fontsize for compliance with available fonts.
+
+1998-07-15
+----------
+* SeppStart.pm does not use absolute paths for starting application
+  binaries anymore. This is not necessary, because the path gets set
+  anyway ... 
+
+***INCOMPATIBLE*CHANGE***
+
+* sepp.conf has been extended by the section *** sepp user ***
+  you have to add this section
+
+
+1998-07-10
+----------
+* fixed webbuild function to correctly identify the installed packages
+
+1998-07-08
+----------
+* installing script langunages under sepp requires the interpreter to be
+  accessible directly. The OS does not like #! lines pinting to
+  wrappers. The binaries section of META does allow the line prefix
+  >> for files which must be linked without an intermediate wrapper ..
+
+1998-06-30
+----------
+* make seppadm webbuild complain if it does not find a package ... 
+
+1998-06-17
+----------
+* removed debugging exit ...
+
+1998-06-16
+----------
+* Andi Karrer has ported seppadm to DEC UNIX (OSF1)
+  and fixed some typos on the way.
+
+* updated seppdoc.pdf
+
+1998-06-02
+----------
+* automount.master was still here instead of autosepp_master
+
+1998-05-29
+----------
+* seppadm checks for the OS it is running on and will complain if it has
+  not been ported to that OS yet
+* seppadm is now totally independant of our local perl installation.
+* seppadm writes info about the current OS into the META file upon install
+* better error messages and description for remote packlists
+
+***INCOMPATIBLE*CHANGE***
+
+* automount.indirect is now called autosepp_indirect
+* automount.master is now called autosepp_master
+* this is because . is a bad idea with automount map names
+
+***UPDATE PROCEDURE******
+
+* unpack the distribution into /usr/sepp
+
+cd /usr/sepp/conf
+cp automount.indirect autosepp_indirect
+
+* edit /etc/auto_master and fix the sepp map to read
++/usr/sepp/conf/autosepp_master
+
+
+1998-05-22
+----------
+* SeppStart.pm 
+  better handling of programs and packages with dashes in their names ...
+* seppadm better handling of program names with - 
+* seppadm ignore # in README files
+
+1998-05-20 B
+------------
+* more cheks for correct permissions of generated files
+
+1998-05-20 A
+------------
+* Added check to makesure that packlists are *world* readable ...
+
+1998-05-19
+----------
+* Improved usage message for seppadm
+
+1998-05-18
+----------
+* Improved SeppStart.pm when handling executables which contain
+  a - in their proper name ...
+
+1998-05-13 C
+------------
+* sepp.conf and sepprc.system are called sepp.conf-dist and sepprc.dist
+  in the tar file to prevent accidents ... :-)
+
+1998-05-13 B
+------------
+* Fixed Removal of non Local Packs from auto.indirect map
+
+1998-05-13 A
+------------
+* Initial Beta Release

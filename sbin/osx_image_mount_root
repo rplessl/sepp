@@ -1,0 +1,123 @@
+#!/usr/bin/perl -T
+use strict;
+
+# just to make sure that we actually deal with a package name.
+
+die "USAGE: osx_image_mount.pl -w|-s|-r|-u <Sepp-Package>"
+  unless $ARGV[0]=~m{^-([rswu])$};
+
+my $opt=$1;
+
+die "ERROR: Not a proper packname"
+  unless $ARGV[1] =~ m|^([-_a-z0-9]+)-([_\.a-z0-9]*\d[_\.a-z0-9]*)-([a-z]+)$| ;
+
+my $pack="$1-$2-$3";
+
+my $localuid=(getpwnam 'local')[2];
+
+# Don't put the image into the SEPP-Directory. --> SEPP is public
+# --> Violates Copyrights
+my $imgpath="/usr/pack/$pack/disk_image.dmg";
+my $mount="/var/sepp/mount/$pack";
+my $shadowdir="/var/sepp/shadow";
+my $shadowpath="$shadowdir/$pack.shadow";
+
+$ENV{PATH}="/bin:/usr/bin";
+my $info=`/usr/bin/hdiutil info`;
+my @info=split /^={30,}\s*$/m,$info;
+my $dev;
+
+for(@info)
+  {
+    next unless m|^image-path\s*:\s+\Q$imgpath\E\s*$|m;
+    my $img=$1;
+    die "Could not find device for $imgpath"
+      unless m{^(/dev/disk\d+s\d+)\s+Apple_HFS\s*(/\S+)?$}m;
+    unless ($2) {
+      die "Could not detach $1"  unless 0==system "/usr/bin/hdiutil", "detach", $1;
+    }
+    else { 
+      $dev=$1;
+    }
+  }
+
+if($opt eq "w" or $opt eq "r" or $opt eq "s")
+  {
+    -d $mount or mkdir $mount or die "ERROR: Could not create dir $mount";	
+    die "ERROR: Not a file $imgpath" unless -f $imgpath;
+    die "ERROR: Image not owned by local" unless (stat $imgpath)[4] == $localuid;
+    die "ERROR: Not a directory $mount" if -l $mount;
+	
+    my $opt1="-readonly";
+    my $opt2="ro";
+    # touch returns 0 on success !!!
+    
+    if($opt eq "w")
+      {
+	die "ERROR: Could not touch $imgpath (not writable?)"
+	  unless 0==system "/usr/bin/touch",$imgpath;
+      }
+    elsif($opt eq "s")
+      {
+	mkdir $shadowdir unless -d $shadowdir;
+	if( -f $shadowpath)
+	  {
+	    die "ERROR: Could not remove $shadowpath (not writable?)"
+	      unless unlink $shadowpath;
+	  }
+	
+	#die "ERROR: Could not touch $shadowpath (not writable?)"
+	#  unless 0==system "/usr/bin/touch",$shadowpath;
+      }
+    
+    if($opt eq "w" or $opt eq "s")
+      {
+	$opt1="-readwrite";
+	$opt2="rw";
+      }
+    
+    if($opt eq "s")
+      {
+	$opt1.=" -shadow '$shadowpath'";
+      }
+    
+    unless($dev)
+      {
+	my @res = `/usr/bin/hdiutil attach -nomount $opt1 '$imgpath'`;
+	
+	die "ERROR: Could not attach $imgpath" 
+	  unless $res[-1] =~ m{^(/dev/disk\d+s\d+)?\s+Apple_HFS\s*$};
+	$dev=$1;
+    
+	# system returns <>0 on failure
+	if(system "/sbin/mount","-t","hfs","-o","$opt2,nosuid,nodev,union,-u=98,-g=80",$dev,$mount)
+	  {
+	    print STDERR "ERROR: Could not mount disk image $dev $imgpath\n";
+	  }
+      }
+  }
+else
+  {
+    unless($dev)
+	{
+	    die "ERROR: Could not find device for $pack --> Not unmounted\n";
+	}
+    if(0==system "/sbin/umount",$dev)
+      {
+	system "/usr/bin/hdiutil","detach",$dev
+	  and warn "WARNING: could not detach $dev";
+	
+	rmdir $mount
+	  or warn "WARNING: Could not remove directory $mount";
+	  
+	if( -e $shadowpath)
+	  {
+	    die "ERROR: Could not remove $shadowpath"
+	      unless unlink $shadowpath;
+	  }
+      }
+    else
+      {
+	warn "WARNING: Could not unmount $dev";
+      }
+  }
