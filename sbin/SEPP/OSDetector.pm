@@ -15,12 +15,13 @@ $VERSION = 0.10;
 # To save the OS evaluation result, a simple datastructure will
 # be saved in the file SEPP_OS_DETECTOR. This data is stored in
 # /tmp and usable till the next reboot of the computer 
-# (normally Distribution updates are causing reboots)
+# (normally, distribution updates are causing reboots)
 
 my $RE_MATCH         = qr{[0-9a-zA-Z_.-]+};
 my $SEPP_OS_DETECTOR = '/tmp/SEPP.OS.DETECTOR';
-my $CFGFILE          ;# = '/usr/sepp/conf/OSDetector.conf';
+my $CFGFILE;         ### default at = '/usr/sepp/conf/OSDetector.conf';
 my $OS               = $^O;
+my %DEFAULTDIR       = ( 'sepp' => '/usr/sepp', 'pack' => '/usr/pack' );
 
 sub parse_config ($)
 {
@@ -151,6 +152,7 @@ sub evaluate_distro ($)
             }
         }
     }
+    return @valid_distro;
 }
 
 sub evaluate_compat ($$)
@@ -225,7 +227,7 @@ sub write_evaluation (@)
 
 sub get_compatible_os(%) 
 {
-    my %DIR = @_;
+    my %DIR = @_ || %DEFAULTDIR;
     $CFGFILE = "$DIR{'sepp'}/conf/OSDetector.conf";
     my @COMPATS;
     if (exists_stored_evaluation()){
@@ -243,7 +245,7 @@ sub get_compatible_os(%)
 sub get_existing_execdir($;%)
 {
     my $PackDir = shift;
-    my %DIR = @_;
+    my %DIR = @_ || %DEFAULTDIR;
     my @COMPATS = get_compatible_os( %DIR );
     return evaluate_dirs($PackDir, @COMPATS);
 }

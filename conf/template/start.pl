@@ -50,7 +50,7 @@
 # AppExec just logs the fact that the application is going to
 # be started.
 
-my $os = SEPP::OSDetector::
+my $os = SEPP::OSDetector:::get_existing_execdir( $PackDir )
 
 if($^O eq 'linux') {
     if ($os =~ m/ia32/) {
