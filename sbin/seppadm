@@ -773,6 +773,7 @@ SUCCESS: * Prepared $packname on $packdisk
 
 sub Environment ()
 {
+    print "$ARGV[0]\n";
     $ARGV[0] =~ m|^(.*?)([^/]+)$|;   
 
     my $packdisk = $1;

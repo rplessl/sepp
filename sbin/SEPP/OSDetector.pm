@@ -170,7 +170,7 @@ sub evaluate_compat ($$)
 sub evaluate_dirs ($;@)
 {
     my $PackDir = shift;
-    my @compats = shift;
+    my @compats = @_;
 
     my $valid_directory;
 
@@ -245,6 +245,9 @@ sub get_compatible_os(%)
 sub get_existing_execdir($;%)
 {
     my $PackDir = shift;
+    if ($PackDir = 'SEPP::OSDetector') {
+       $PackDir = shift;
+    }
     my %DIR = @_ || %DEFAULTDIR;
     my @COMPATS = get_compatible_os( %DIR );
     return evaluate_dirs($PackDir, @COMPATS);
