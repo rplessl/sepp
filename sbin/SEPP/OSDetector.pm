@@ -257,29 +257,35 @@ __END__
 
 =head1 NAME
 
-OSDetector.pm - SEPP startup Module for detecting the OS/valid EPREFIX directory
+OSDetector.pm - SEPP startup module for detecting the OS or the valid EPREFIX directory
 
 =head1 SYNOPSIS
 
-my $os = SEPP::OSDetector::get_existing_execdir( $PackDir , %DIR );
+   my $os = SEPP::OSDetector::get_existing_execdir( $PackDir [, %DIR ] ));
 
 or
 
-my @compatibles = SEPP::OSDetector::get_compatible_os( %DIR );
-
+   my @compatibles = SEPP::OSDetector::get_compatible_os( [ %DIR ] );
 
 =head1 DESCRIPTION
 
-This module provides two functions for creating smart os-detection 
-SEPP/start.pl wrappers. 
+This module provides two functions for compiling new SEPP packages 
+and creating smart OS detection SEPP/start.pl wrappers. 
 
 =over 10
 
-=item B<SEPP::OSDetector::get_existing_execdir( $PackDir , %DIR )>
+
+=item B<SEPP::OSDetector::get_existing_execdir( $PackDir [ , %DIR ])>
+
+[ The paramter %DIR is optional and contains the path information
+
+  %DIR = ( 'sepp' => '/usr/sepp', 
+           'pack' => '/usr/pack' ); 
+]
 
 Returns the best match for I<$EPREFIX> for the running OS. That
 means if there is a SEPP Package with the following directory
-structure (e.g. smaba-3.0.25-mo):
+structure (e.g. samba-3.0.25-mo):
 
 `--SEPP
 `--amd64-debian-linux3.1
@@ -296,7 +302,13 @@ the result of this function will be
  amd64-debian-linux3.1  on a amd64 debian system (64bit)
  i686-debian-linux3.1   on a i686 debian system  (32bit)
 
-=item B<SEPP::OSDetector::get_compatible_os( %DIR )>
+=item B<SEPP::OSDetector::get_compatible_os( [ %DIR ] )>
+
+[ The paramter %DIR is optional and contains the path information
+
+  %DIR = ( 'sepp' => '/usr/sepp', 
+           'pack' => '/usr/pack' );  
+]
 
 Returns a perl array with OS compatible I<$EPREFIX>. 
 E.g. on a amd64 system running Ubuntu 6.10 the result will be
@@ -314,6 +326,124 @@ first entry in the array is the best match, the last the
 worst.
 
 =back
+
+=head2 configuration file
+
+SEPP::OSDetector.pm is using the configuration file I<OSDetector.conf>
+which contains all valid CPUs, OSes and distribution. The configuration
+file format is Config::Grammar. 
+
+The "inter OS" compatibility is also kept in this file.
+
+Structure of configuration file:
+
+   *** MY-OS ***
+   + CPU
+   ++ cpu-type
+   +++ cpu-sub-type
+
+   + Distribution
+   ++ distribution-type
+   +++ distribution-sub-type
+
+   *** MY-OTHER-OS ***
+   ...
+   
+   *** Compatibility ***
+   + CPU-OS-DISTRIBUTION_1
+   + CPU-OS-DISTRIBUTION_2   
+
+The name of the head sections (*** MY-OS ***) has to match with 
+the result of $^O.
+
+Each head section has two subsections: CPU and Distributions with 
+their subsub- and subsubsubsections discribing the exact CPUTYPE 
+or OS (relation).
+
+For each cpu(-sub)-type and distribution(-sub)-type a blob of
+executable code should be inserted which returns 'true' if the
+query matches otherwise 'false'.
+
+The Compatibility list is an sorted list of compatible 
+CPU-OS-Distributions triplets to the heading triplet. 
+   
+Example of OSDetector.conf
+
+   *** solaris ***
+   + CPU
+   ++ sparc
+   {
+      my $cpu = `uname -p`;
+      if ($cpu =~ /sparc/) { return 'true'; } else { return 'false'; }
+   }
+   ...
+
+   *** linux ***
+   + CPU
+   ++ ia32
+   {
+       my $cpu = `/bin/uname -m`;
+       if ($cpu =~ /(i686|x86_64)/) { return 'true'; } else { return 'false'; }
+   }
+   +++ amd64
+   {
+       my $processor_type = `/bin/uname -m`;
+       if ($processor_type =~ /x86_64/) { return 'true'; } else { return 'false'; } 
+   }
+   + Distribution
+   ++ debian
+   {
+       if ( -e '/etc/debian_version' && ! -e '/etc/lsb-release' ) {
+           return 'true';  } else { return 'false'; }
+   }
+   +++ debian4.0
+   {
+      if ( -e '/etc/debian_version'&& ! -e '/etc/lsb-release' ) {
+         my $debian_version = `cat /etc/debian_version`;
+         if ($debian_version =~ /4.0/) { return 'true'; } else { return 'false'; }
+      } else { return 'false'; }
+   }
+   ++ ubuntu
+   {
+      if ( -e '/etc/lsb-release' ) {
+         my $lsbrelease =  `/bin/cat /etc/lsb-release`;
+         if ($lsbrelease =~ /Ubuntu/) { return 'true'; } else { return 'false'; }
+      } else { return 'false'; }
+   }
+   +++ ubuntu6.06
+   {
+      if ( -e '/etc/lsb-release' ) {
+         my $lsbrelease = `/bin/cat /etc/lsb-release`;
+         if ($lsbrelease =~ /Ubuntu/) {
+            if ($lsbrelease =~ /6.06/) {
+              return 'true';
+            } else { return 'false'; }
+         } else { return 'false'; }
+      } else { return 'false'; }
+   }
+   ...
+
+
+   *** Compatibility ***
+   + amd64-linux-ubuntu7.04
+   ia32-linux-ubuntu7.04
+   amd64-linux-ubuntu6.10
+   ia32-linux-ubuntu6.10
+   amd64-linux-ubuntu6.06
+   amd64-debian-linux3.1
+   ia32-linux-ubuntu6.06
+   i686-debian-linux3.1
+
+   + ia32-linux-ubuntu7.04
+   ia32-linux-ubuntu6.10
+   ia32-linux-ubuntu6.06
+   i686-debian-linux3.1
+   ...
+
+
+=over 10
+
+=item 
 
 =head1 BUGS
 
