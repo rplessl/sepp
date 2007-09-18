@@ -3,6 +3,7 @@
 use lib '/usr/sepp/sbin';
 use strict;
 use SEPP::Index;
+use SEPP::OSDetector;
 
 =head1 NAME
 
@@ -11,6 +12,8 @@ seppadm - SEPP package administration tool
 =head1 SYNOPSIS
 
 B<seppadm> I<OPT> B<prepare> [I<pathname>/]I<package> [B<--shellonly>] [B<--noshell>]
+
+B<seppadm> I<OPT> B<environment> [I<pathname>/]I<package>
 
 B<seppadm> I<OPT> B<install> I<package> [B<--default>] [B<--force>]
 
@@ -22,13 +25,15 @@ B<seppadm> I<OPT> B<mirrorupdate>
 
 B<seppadm> I<OPT> B<expose> I<package>
 
+B<seppadm> I<OPT> B<license-expose> I<package>
+
 B<seppadm> I<OPT> B<report> [B<--datesort>] [B<--showremoved>]
 
 B<seppadm> I<OPT> B<webbuild> [B<--localonly>] [B<--all>]
 
 B<seppadm> I<OPT> B<prefix_bundle> I<package> I<AppBundle>...
 
-I<OPT> : [B<--seppdir=>I<DIR>] [B<--platform=>I<OS>]
+I<OPT> : [B<--seppdir=>I<DIR>] [B<--packdir=>I<DIR>] [B<--platform=>I<OS>]
 
 =head1 DESCRIPTION
 
@@ -68,6 +73,10 @@ has no means for doing this for you.
 
 In a DFS setting the new package directory must exist prior to preparing
 the package. As seppadm has no means for doing this for you.
+
+=item B<environment> 
+
+Prints environment variables.
 
 =item B<install> I<package> [B<--default>] [B<--force>]
 
@@ -161,14 +170,26 @@ Verifies that all local mirrors are up to date.
 
 =item B<expose> I<package>
 
-If a package has the license type 'world', this function will expose the
-whole package on the sepp package website by creating tar.bz2 archives in
-the SEPP/pub directory of the package. If there are recognizable
-architecture subdirectories in the package root, separate archives will be
-generated for each architecture. The F<SEPP/pub> directory will be symlinked
-from F</usr/sepp/html/pack/>I<package>. A list of all published packages is
-maintained in F</usr/sepp/html/pack/index.txt>. Use the B<sepp-get>
+If a package has the license type 'world', this function will expose the 
+whole package on the sepp package website by creating tar.bz2 archives 
+in the SEPP/pub directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The F<SEPP/pub> directory will be symlinked 
+from F</usr/sepp/html/pack/>I<package>. A list of all published packages 
+is maintained in F</usr/sepp/html/pack/index.txt>. Use the B<sepp-get> 
 application to download exposed sepp packages from one site to another.
+
+=item B<license-expose> I<package>
+
+If a package has the license type 'site', this function will expose 
+the whole package on the sepp package website by creating tar.bz2 archives 
+in the F<SEPP/lic-pack> directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The F<SEPP/lic-pack> directory will 
+be symlinked  from F</usr/sepp/html/lic-pack/>I<package>. A list of all 
+published packages is maintained in F</usr/sepp/html/lic-pack/index.txt>. 
+Use the B<sepp-get> application to download exposed sepp packages from one 
+site to another.
 
 =item B<report>  [B<--datesort>] [B<--showremoved>]
 
@@ -203,6 +224,14 @@ C<ch.ethz.ee.isg.>I<pkg_name>C<->I<version_number>C<->I<maintainer>C<.>I<origina
 
 Use I<DIR> instead of /usr/sepp
 
+=item --packdir=DIR
+
+Use I<DIR> instead of /usr/pack
+
+CAUTION: Other packdir's than /usr/pack (may) breaks the possibiliy to
+exchange packages with other SEPP users. Change this only if you know 
+whats the inpact of this setting.
+
 =item --platform=OS
 
 Replace "preferred operating system" of sepp.conf with I<OS>
@@ -219,8 +248,9 @@ No Idea ... But if you tell me I'll fix 'em.
 
 =head1 AUTHOR
 
-S<Tobias Oetiker <oetiker@ee.ethz.ch>>
-S<David Schweikert <dws@ee.ethz.ch>> (maintainer)
+<Tobias Oetiker <tobi@oetiker.ch>>
+<David Schweikert <david@schweikert>>
+<Roman Plessl <roman.plessl@oetiker.ch>> (maintainer)
 
 =cut
 
@@ -239,15 +269,6 @@ my $seppdomain; # filled by CheckSEPPrc
 
 #make sure we find uname
 $ENV{PATH}="/usr/bin:/usr/sbin:/bin:/sbin:/usr/lib";
-
-# PLATFORM CONFIGURATION
-
-my %platform_triplets = (
-    'sun4u-sun-solaris2.8'      => { OS => 'solaris' },
-    'i686-debian-linux3.1'      => { OS => 'linux' },
-    'amd64-debian-linux3.1'     => { OS => 'linux' },
-    'powerpc-apple-darwin7.4.1' => { OS => 'darwin' },
-);
 
 my ($OS, %PROG, $UNAME, @PATH, @MANPATH);
 switch: for (`uname -sr`) {
@@ -495,12 +516,14 @@ sub Main ();
 
 # major functions
 sub Prepare ();
+sub Environment ();
 sub Install ();
 sub Remove ();
 sub Mirror ($$);             # Expects ParsePacklists as argument
 sub MirrorUpdate ();
 sub UnExpose ($);
 sub Expose ($);
+sub LicExpose ($);
 sub Report ();
 sub Webbuild ();
 sub prefix_bundle ();
@@ -609,6 +632,8 @@ sub Main ()
     CheckOpts qw(noshell shellonly);
     ChangeToSepp;
     Prepare;
+  } elsif ($FUNC eq 'environment') {
+    Environment;
   } elsif ($FUNC eq 'install') {
     CheckOpts qw(force default osxnoaction);
     CheckSEPPrc;
@@ -630,6 +655,9 @@ sub Main ()
   } elsif ($FUNC eq 'expose') {
     ChangeToSepp;
     Expose($ARGV[0])
+  } elsif ($FUNC eq 'license-expose') {
+    ChangeToSepp;
+    LicExpose($ARGV[0])
   } elsif ($FUNC eq 'report') {
     CheckOpts qw(datesort showremoved);
     Report
@@ -653,6 +681,11 @@ sub Prepare ()
 { 
     my $noshell;
     my $shellonly;
+    
+    if ( ! -x "$DIR{'sepp'}/bin/seppadm" ) {
+        system "ln","-s","$DIR{'sepp'}/sbin/seppadm","$DIR{'sepp'}/bin/seppadm";
+    }
+
     if ((scalar grep {$_ eq '--noshell'} @ARGV) > 0) {
 	$noshell=1;
     }
@@ -736,6 +769,38 @@ SUCCESS: * Prepared $packname on $packdisk
     # exist for a long time ...
     Unlock();
     SaneShell($packname) unless defined $noshell;
+}
+
+sub Environment ()
+{
+    print "$ARGV[0]\n";
+    $ARGV[0] =~ m|^(.*?)([^/]+)$|;   
+
+    my $packdisk = $1;
+    my ($packname,$packversion,$packauthor) = CheckAppName $2;
+    $packname = "${packname}-${packversion}-${packauthor}";
+
+    my $os_name = (SEPP::OSDetector::get_compatible_os( %DIR ))[0];
+
+    foreach my $line (@{$$CONF{'pathes and variables'}}) {
+       $line =~ m|^\s*(\S+)\s*=\s*(.+?)\s*$| || Warning "Can't parse $line";
+       my $string = $2;
+       my $var = $1;
+       $string =~ s|{PACK}|$packname|g;
+       $string =~ s|{ARCH}|$os_name|g;
+       print "$var=$string\n";
+    }
+    foreach my $line (@{$$CONF{'compile env'}}) {
+       $line =~ m|^\s*(\S+)\s*=\s*(.+?)\s*$| || Warning "Can't parse $line";
+       my $string = $2;
+       my $var = $1;
+       $string =~ s|{SEPP}|$DIR{'sepp'}|g;
+       $string =~ s|{PATH}|$ENV{PATH}|g;
+       $string =~ s|{HOME}|$ENV{HOME}|g;
+       $string =~ s|{PACKDIR}|$packname|g;
+       $string =~ s|{PACK}|$packname|g;
+       print "$var=$string\n";
+    }
 }
 
 sub Install ()
@@ -1114,33 +1179,38 @@ sub UnExpose ($) {
     Unlock();
 }
 
-sub TarPack ($){
+sub TarPack ($$){
     my $pack = shift;
-    my $archpat = '(?:amd64|i686|sun4u|powerpc)-\S+-\S+';
+    my $pub = shift;
+    my $archpat = '(?:amd64|i686|ia32|sun4u|powerpc)-\S+-\S+';
     opendir DIR, $DIR{'pack'}."/$pack" or Error "Can't open $DIR{'pack'}/$pack $!";
     my @archs = grep {/^$archpat$/} readdir DIR;
     closedir DIR;
     my @excl;
-    if(not -d "$DIR{'pack'}/$pack/SEPP/pub") {
-	mkdir("$DIR{'pack'}/$pack/SEPP/pub",0755) or
-	    Error "Couldn't create $DIR{'pack'}/$pack/SEPP/pub $!";
+    if(not -d "$DIR{'pack'}/$pack/SEPP/$pub") {
+	mkdir("$DIR{'pack'}/$pack/SEPP/$pub",0755) or
+	    Error "Couldn't create $DIR{'pack'}/$pack/SEPP/$pub $!";
     }
-    my $tar = '/usr/sepp/bin/gtar';
-    Error "To Expose SEPP Packages $tar is required" unless -x $tar;
+    my $gtar =  -x '/usr/sepp/bin/gtar' ? '/usr/sepp/bin/gtar' : ${PROG}{tar};
+    Error "To Expose SEPP Packages $gtar is required" unless -x $gtar;
+    # the /./ syntax is necessary to make the thing work
+    # even when the pack-dir is a symlink
     foreach my $arch (@archs){
-	Info "Tarring $pack/$arch";
-	system $tar,"-jcf","$DIR{'pack'}/$pack/SEPP/pub/$arch.tar.bz2","-C$DIR{'pack'}","$pack/$arch";
-	Error "aborting tar failed ..." if $?;
-	push @excl, "--exclude=$pack/$arch";
+        Info "Tarring $pack/$arch";
+	    system $gtar,"-jcf","$DIR{'pack'}/$pack/SEPP/$pub/$arch.tar.bz2","-C$DIR{'pack'}","$pack/$arch";
+	    Error "aborting tar failed ..." if $?;
+	    push @excl, "--exclude=$pack/./$arch";
     }
-    push @excl, "--exclude=$pack/SEPP/pub";
-    push @excl, "--exclude=$pack/SEPP/ORIGINAL";
+    push @excl, "--exclude=$pack/./SEPP/$pub";
+    push @excl, "--exclude=$pack/./SEPP/ORIGINAL";
     Info "Tarring remaining bits of $pack";
-    system $tar,"-C$DIR{'pack'}","-jcf","$DIR{'pack'}/$pack/SEPP/pub/common.tar.bz2",@excl,$pack;
+    system $gtar,"-C$DIR{'pack'}","-jcf","$DIR{'pack'}/$pack/SEPP/$pub/common.tar.bz2",@excl,"$pack/.";
     Error "aborting tar failed ..." if $?;
     return ('common',@archs)
 }
 	
+
+
 sub Expose ($)
 {
     my $pack = shift;
@@ -1163,7 +1233,7 @@ sub Expose ($)
 	close HTACCESS;
 	Info "Wrote new $pubdir/.htaccess";
     }
-    my @tars = TarPack $pack;
+    my @tars = TarPack($pack,'pub');
      
     if(not -e "$pubdir/$pack") {
 	symlink "/usr/pack/$pack/SEPP/pub","$pubdir/$pack";
@@ -1179,6 +1249,56 @@ sub Expose ($)
     my $deps = join(" ", @deps) || "";
     $index->{$pack} = {
         pubtime => time, 
+        arch    => "@tars",
+        name    => $META->{'package name'}[0],
+        desc    => $META->{'one line description'}[0],
+        deps    => $deps,
+    };
+    SEPP::Index::index_write($index, "$pubdir/index.txt");
+
+    Unlock();
+}
+
+sub LicExpose ($)
+{
+    my $pack = shift;
+    my $pubdir = $DIR{"sepp"}."/html/lic-pack";
+    my ($packname,$packversion,$packmaint) = CheckAppName $pack;
+    my $META = ValidatePack $pack;
+    if(not $META->{'license'}[0] eq "site") {
+        Error "Cannot publish $pack unless its license is 'site'";
+    }
+    if(not -d "$pubdir") {
+        mkdir("$pubdir",0755) or
+            Error "Couldn't create $pubdir";
+        Info "Created directory $pubdir";
+    }
+    if(not -f "$pubdir/.htaccess") {
+        open (HTACCESS,">$pubdir/.htaccess") or
+            Error "Couldn't write $pubdir/.htaccess";
+        print HTACCESS "IndexIgnore *\n";
+        print HTACCESS "DirectoryIndex index.txt\n";
+        print HTACCESS "### ADD ACCESS JUST FOR CUSTOMERS ###\n";
+        close HTACCESS;
+        Info "Wrote new $pubdir/.htaccess";
+    }
+
+    my @tars = TarPack($pack,'lic-pack');
+
+    if(not -e "$pubdir/$pack") {
+        symlink "/usr/pack/$pack/SEPP/lic-pack","$pubdir/$pack";
+        Info "Linked $pubdir/$pack /usr/pack/$pack/SEPP/lic-pack";
+    }
+
+    LockExclusive();
+
+    Info "Rebuilding $pubdir/index.txt";
+    my $index = SEPP::Index::index_read("$pubdir/index.txt");
+    # remove any space in the definition of each dependency
+    my @deps = map { my $d = $_; $d =~ s/\s+//g; $d } @{$META->{'depends on'}};
+    my $deps = join(" ", @deps) || "";
+    $index->{$pack} = {
+        pubtime => time,
         arch    => "@tars",
         name    => $META->{'package name'}[0],
         desc    => $META->{'one line description'}[0],
@@ -1265,7 +1385,7 @@ sub Webbuild (){
         print "- Reading Packs: ",$tasksize--,"    \r";
         next if $localonly and not defined $$am{$pack}{$serv}; # skip non local packages
         next unless -x "$DIR{sepp}/stub/$pack"; #ignore things which are not yet installed
-	#next if -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE"; # ignore REMOVABLE packs
+	next if -f "$DIR{'pack'}/$pack/SEPP/REMOVABLE"; # ignore REMOVABLE packs
 
         $pdb{$pack}{apppage} = $DIR{'sepp'}."/html/$pack.html";
         $pdb{$pack}{make_apppage} = 1;
@@ -1559,14 +1679,15 @@ XX
     Unlock();
 }
 
+
 sub prefix_bundle ()
-  {
+{
     my $pack = shift @ARGV;
     my ($packname,$packversion,$packmaint) = CheckAppName $pack;
 
     require osx_stubber;
     osx_stubber::prefix_bundle($pack,@ARGV);
-  }
+}
 
 
 # get the local packlist and update it with the latest info about the package
@@ -1756,16 +1877,18 @@ sub ValidatePack ( $ ){
 sub Usage ( ) {
     print "
 USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
+       seppadm environment package
        seppadm install package [--default | --force]
        seppadm remove package [--final | --usrsepp]
        seppadm mirror package [--force]
        seppadm mirrorupdate
        seppadm expose package
+       seppadm license-expose package
        seppadm report [--datesort] [--showremoved]
        seppadm webbuild [--localonly] [--all]
        seppadm prefix_bundle package pathname...
 
-       Release: 1.4.2
+       Release: 1.5.0
 
 ";
 	 exit 0;
@@ -1807,6 +1930,10 @@ sub ReadSEPPconf () {
 	    'packlist does not exist' => 's|(/afs/)([^\.])|$1\.$2|; m|(\S+)$| and (-e $1)',
 	    'packlist must be world readable'=> 's|(/afs/)([^\.])|$1\.$2|; m|(\S+)$| && ((stat $1)[2] & 0004)'},
 
+         'pathes and variables'
+         =>{'LC:many' => 0,
+            'ENVIRONMENT=xxxx expected'=> 'm|\S+\s*=\s*\S+|'},
+
 	 'preferred operating system'
 	 =>{'LC:one' => 1,
 	    'not a known operating system'
@@ -1830,7 +1957,7 @@ sub ReadSEPPconf () {
 
 	 'compile env'
 	 =>{'LC:many' => 0,
-	    'ENVIRONEMNT=xxxx expected'=> 'm|\S+\s*=\s*\S+|'}
+	    'ENVIRONMENT=xxxx expected'=> 'm|\S+\s*=\s*\S+|'}
 
 	);
 
@@ -1982,17 +2109,13 @@ sub CheckAppName ( $ ){
 sub CheckDependency($) {
     my ($dep) = @_;
     my $dep_pack;
+    my @compat_os = SEPP::OSDetector::get_compatible_os( %DIR );
     if($dep =~ /^(\S+)\s*:\s*([^\s,]+(?:\s*,\s*[^\s,]+)*)$/) {
         $dep_pack = $1;
         my @dep_arch = split(/\s*,\s*/,$2);
         my $is_my_arch=0;
         for my $a (@dep_arch) {
-            defined $platform_triplets{$a} or do {
-                warn "ERROR: platform $a unknown\n";
-                return 0;
-            };
-            my $dep_OS = $platform_triplets{$a}{OS};
-            $is_my_arch = 1 if $OS eq $dep_OS;
+            $is_my_arch = 1 if (grep {$a} @compat_os);
         }
         return 1 unless $is_my_arch;
     }
@@ -2036,8 +2159,8 @@ sub ReadMETA ( $ ) {
 
      'license' =>
      {'LC:one'=>0,
-      'must be one of limited, unlimited, free, world'
-      => 'm/^(?:limited|unlimited|free|world)$/'},
+      'must be one of limited, unlimited, free, world, site'
+      => 'm/^(?:limited|unlimited|free|world|site)$/'},
 
      'license contact' =>
      {'not in "Full Name <email@address.org> [phone]" format'
@@ -2050,7 +2173,7 @@ sub ReadMETA ( $ ) {
      'categories' =>
      {'LC:many'=>0,
       'not a known category'
-      => 'm/^(?:system|sci&eng|programming|internet|graphics|multimedia|fun|text|office)$/'},
+      => 'm/^(?:system|sci&eng|programming|internet|graphics|multimedia|fun|text|office|cad)$/'},
 
      'operating system' =>
      {'LC:many'=>0,
