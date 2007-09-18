@@ -50,14 +50,11 @@
 # AppExec just logs the fact that the application is going to
 # be started.
 
-use SEPP::OSDetector;
-my $os = SEPP::OSDetector->get_existing_execdir( $PackDir );
-
 if($^O eq 'linux') {
-    if ($os =~ m/ia32/) {
+    if ($OsName =~ m/ia32/) {
         SetENV "GCONV_PATH", "/emul/ia32-linux/usr/lib/gconv";
 	SetENV "XLOCALEDIR", "/emul/ia32-linux/usr/X11R6/lib/X11/locale";
     }
 }
 
-AppRun "$PackDir/$os/bin";
+AppRun "$PackDir/$OsName/bin";

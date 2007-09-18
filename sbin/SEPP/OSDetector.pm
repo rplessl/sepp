@@ -19,9 +19,11 @@ $VERSION = 0.10;
 
 my $RE_MATCH         = qr{[0-9a-zA-Z_.-]+};
 my $SEPP_OS_DETECTOR = '/tmp/SEPP.OS.DETECTOR';
-my $CFGFILE;         ### default at = '/usr/sepp/conf/OSDetector.conf';
+my $CFGFILE;         
 my $OS               = $^O;
 my %DEFAULTDIR       = ( 'sepp' => '/usr/sepp', 'pack' => '/usr/pack' );
+my $sepp_name        = '>#>user_name<#<' || 'sepp';
+my $sepp_uid         = '>#>user_uid<#<'  || '65409';
 
 sub parse_config ($)
 {
@@ -187,6 +189,11 @@ sub evaluate_dirs ($;@)
 sub exists_stored_evaluation ()
 {
     if (-f "$SEPP_OS_DETECTOR") {
+        my $sepp_os_detector_uid = (stat $SEPP_OS_DETECTOR)[4]
+        if (not ($sepp_os_detector_user == 0 || $sepp_os_detector_user == $sepp_uid )) {
+	   print STDERR "$SEPP_OS_DETECTOR has owner $sepp_os_detector_uid \n";
+           return undef;
+	}
         return 'true';
     }
     else {
@@ -228,7 +235,7 @@ sub write_evaluation (@)
 sub get_compatible_os(%) 
 {
     my %DIR = @_ || %DEFAULTDIR;
-    $CFGFILE = "$DIR{'sepp'}/conf/OSDetector.conf";
+    $CFGFILE = "$DIR{'sepp'}/conf/osdetector.conf";
     my @COMPATS;
     if (exists_stored_evaluation()){
       @COMPATS = get_stored_evaluation();
