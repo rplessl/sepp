@@ -23,7 +23,8 @@ my $CFGFILE;
 my $OS               = $^O;
 my %DEFAULTDIR       = ( 'sepp' => '/usr/sepp', 'pack' => '/usr/pack' );
 my $sepp_name        = '>#>user_name<#<' || 'sepp';
-my $sepp_uid         = '>#>user_uid<#<'  || '65409';
+my $sepp_uid_gid     = '>#>user_id<#<' || undef;
+my $sepp_uid         = $sepp_uid_gid ? ($sepp_uid_gid  =~ s/:[\d]*$// ) : '65409';
 
 sub parse_config ($)
 {
