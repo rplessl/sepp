@@ -129,12 +129,14 @@
 .\" ========================================================================
 .\"
 .IX Title "SEPPADM 1"
-.TH SEPPADM 1 "2006-05-03" "1.4.2" "SEPP"
+.TH SEPPADM 1 "2007-11-11" "perl v5.8.4" "User Contributed Perl Documentation"
 .SH "NAME"
 seppadm \- SEPP package administration tool
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBprepare\fR [\fIpathname\fR/]\fIpackage\fR [\fB\-\-shellonly\fR] [\fB\-\-noshell\fR]
+.PP
+\&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBenvironment\fR [\fIpathname\fR/]\fIpackage\fR
 .PP
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBinstall\fR \fIpackage\fR [\fB\-\-default\fR] [\fB\-\-force\fR]
 .PP
@@ -146,13 +148,15 @@ seppadm \- SEPP package administration tool
 .PP
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBexpose\fR \fIpackage\fR
 .PP
+\&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBlicense-expose\fR \fIpackage\fR
+.PP
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBreport\fR [\fB\-\-datesort\fR] [\fB\-\-showremoved\fR]
 .PP
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBwebbuild\fR [\fB\-\-localonly\fR] [\fB\-\-all\fR]
 .PP
 \&\fBseppadm\fR \fI\s-1OPT\s0\fR \fBprefix_bundle\fR \fIpackage\fR \fIAppBundle\fR...
 .PP
-\&\fI\s-1OPT\s0\fR : [\fB\-\-seppdir=\fR\fI\s-1DIR\s0\fR] [\fB\-\-platform=\fR\fI\s-1OS\s0\fR]
+\&\fI\s-1OPT\s0\fR : [\fB\-\-seppdir=\fR\fI\s-1DIR\s0\fR] [\fB\-\-packdir=\fR\fI\s-1DIR\s0\fR] [\fB\-\-platform=\fR\fI\s-1OS\s0\fR]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 The \fBseppadm\fR command is used to administer software packages within the
@@ -188,6 +192,9 @@ has no means for doing this for you.
 .Sp
 In a \s-1DFS\s0 setting the new package directory must exist prior to preparing
 the package. As seppadm has no means for doing this for you.
+.IP "\fBenvironment\fR" 10
+.IX Item "environment"
+Prints environment variables.
 .IP "\fBinstall\fR \fIpackage\fR [\fB\-\-default\fR] [\fB\-\-force\fR]" 10
 .IX Item "install package [--default] [--force]"
 Installing a package means two things: First the binaries get linked
@@ -202,8 +209,8 @@ dir-structure of the SEPP-Package is then stubbed in the
 could have the following content:
 .Sp
 .Vb 10
-\& /usr/pack/mypkg-1.0-as
-\&   powerpc-apple-darwin7.4.1/
+\& /usr/pack/mypkg\-1.0\-as
+\&   powerpc\-apple\-darwin7.4.1/
 \&      Applications/
 \&         App1.app/
 \&         App2.app/
@@ -215,11 +222,11 @@ could have the following content:
 .Ve
 .Sp
 .Vb 6
-\& /usr/sepp/var/mypkg-1.0-as
+\& /usr/sepp/var/mypkg\-1.0\-as
 \&   Library/
 \&      Preferences/
-\&         ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App1
-\&         ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App2
+\&         ch.ethz.ee.isg.mypgk\-1_0\-as.com.apple.App1
+\&         ch.ethz.ee.isg.mypgk\-1_0\-as.com.apple.App2
 \&      AdditionalLibs (symlink into /usr/pack/...)
 .Ve
 .Sp
@@ -239,8 +246,8 @@ The relevant sections of the \f(CW\*(C`SEPP/META.macosx\*(C'\fR file:
 .Sp
 .Vb 3
 \& *** macosx binaries ***
-\& powerpc-apple-darwin7.4.1/Applications
-\& >>powerpc-apple-darwin7.4.1/Applications/Important.doc
+\& powerpc\-apple\-darwin7.4.1/Applications
+\& >>powerpc\-apple\-darwin7.4.1/Applications/Important.doc
 .Ve
 .Sp
 The resulting structure in the \f(CW\*(C`macosx\*(C'\fR directory would be:
@@ -250,7 +257,7 @@ The resulting structure in the \f(CW\*(C`macosx\*(C'\fR directory would be:
 \&   Applications/
 \&      All/
 \&         misc/
-\&            MyPkg-1.0-as/
+\&            MyPkg\-1.0\-as/
 \&               App1.app/ (stub)
 \&               App2.app/ (stub)
 \&               Examples/ (symlink)
@@ -264,8 +271,8 @@ The resulting structure in the \f(CW\*(C`macosx\*(C'\fR directory would be:
 \&               Important.doc (copy)
 \&    Library/
 \&       Preferences/
-\&          ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App1 (symlink)
-\&          ch.ethz.ee.isg.mypgk-1_0-as.com.apple.App2 (symlink)
+\&          ch.ethz.ee.isg.mypgk\-1_0\-as.com.apple.App1 (symlink)
+\&          ch.ethz.ee.isg.mypgk\-1_0\-as.com.apple.App2 (symlink)
 \&       AdditionalLibs/
 \&          Lib1.dyld (symlink)
 .Ve
@@ -288,14 +295,25 @@ state of the applications \s-1CHANGE\s0 log and PackList.
 Verifies that all local mirrors are up to date.
 .IP "\fBexpose\fR \fIpackage\fR" 10
 .IX Item "expose package"
-If a package has the license type 'world', this function will expose the
-whole package on the sepp package website by creating tar.bz2 archives in
-the SEPP/pub directory of the package. If there are recognizable
-architecture subdirectories in the package root, separate archives will be
-generated for each architecture. The \fISEPP/pub\fR directory will be symlinked
-from \fI/usr/sepp/html/pack/\fR\fIpackage\fR. A list of all published packages is
-maintained in \fI/usr/sepp/html/pack/index.txt\fR. Use the \fBsepp-get\fR
+If a package has the license type 'world', this function will expose the 
+whole package on the sepp package website by creating tar.bz2 archives 
+in the SEPP/pub directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The \fISEPP/pub\fR directory will be symlinked 
+from \fI/usr/sepp/html/pack/\fR\fIpackage\fR. A list of all published packages 
+is maintained in \fI/usr/sepp/html/pack/index.txt\fR. Use the \fBsepp-get\fR 
 application to download exposed sepp packages from one site to another.
+.IP "\fBlicense-expose\fR \fIpackage\fR" 10
+.IX Item "license-expose package"
+If a package has the license type 'site', this function will expose 
+the whole package on the sepp package website by creating tar.bz2 archives 
+in the \fISEPP/lic\-pack\fR directory of the package. If there are recognizable 
+architecture subdirectories in the package root, separate archives will be 
+generated for each architecture. The \fISEPP/lic\-pack\fR directory will 
+be symlinked  from \fI/usr/sepp/html/lic\-pack/\fR\fIpackage\fR. A list of all 
+published packages is maintained in \fI/usr/sepp/html/lic\-pack/index.txt\fR. 
+Use the \fBsepp-get\fR application to download exposed sepp packages from one 
+site to another.
 .IP "\fBreport\fR  [\fB\-\-datesort\fR] [\fB\-\-showremoved\fR]" 10
 .IX Item "report  [--datesort] [--showremoved]"
 Generates a list of available packages using information from all linked
@@ -322,6 +340,13 @@ Cocoa applications. The prefix is constructed according to the \s-1OSX\s0 standa
 .IP "\-\-seppdir=DIR" 10
 .IX Item "--seppdir=DIR"
 Use \fI\s-1DIR\s0\fR instead of /usr/sepp
+.IP "\-\-packdir=DIR" 10
+.IX Item "--packdir=DIR"
+Use \fI\s-1DIR\s0\fR instead of /usr/pack
+.Sp
+\&\s-1CAUTION:\s0 Other packdir's than /usr/pack (may) breaks the possibiliy to
+exchange packages with other \s-1SEPP\s0 users. Change this only if you know 
+whats the inpact of this setting.
 .IP "\-\-platform=OS" 10
 .IX Item "--platform=OS"
 Replace \*(L"preferred operating system\*(R" of sepp.conf with \fI\s-1OS\s0\fR
@@ -333,5 +358,7 @@ No Idea ... But if you tell me I'll fix 'em.
 2004\-08\-27 as Extended for MacOSX
 .SH "AUTHOR"
 .IX Header "AUTHOR"
-Tobias\ Oetiker\ <oetiker@ee.ethz.ch>
-David\ Schweikert\ <dws@ee.ethz.ch> (maintainer)
+<Tobias Oetiker <tobi@oetiker.ch>>
+<David Schweikert <david@schweikert.ch>>
+<Anton Schultschik  <aschults@ee.ethz.ch>>
+<Roman Plessl <roman.plessl@oetiker.ch>> (maintainer op\-sepp)

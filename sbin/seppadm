@@ -249,8 +249,9 @@ No Idea ... But if you tell me I'll fix 'em.
 =head1 AUTHOR
 
 <Tobias Oetiker <tobi@oetiker.ch>>
-<David Schweikert <david@schweikert>>
-<Roman Plessl <roman.plessl@oetiker.ch>> (maintainer)
+<David Schweikert <david@schweikert.ch>>
+<Anton Schultschik  <aschults@ee.ethz.ch>>
+<Roman Plessl <roman.plessl@oetiker.ch>> (maintainer op-sepp)
 
 =cut
 
