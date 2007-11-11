@@ -17,13 +17,33 @@ $VERSION = 0.10;
 # /tmp and usable till the next reboot of the computer 
 # (normally, distribution updates are causing reboots)
 
-my $RE_MATCH         = qr{[0-9a-zA-Z_.-]+};
-my $SEPP_OS_DETECTOR = '/tmp/SEPP.OS.DETECTOR';
-my $CFGFILE;         
-my $OS               = $^O;
-my %DEFAULTDIR       = ( 'sepp' => '/usr/sepp', 'pack' => '/usr/pack' );
-my $sepp_name        = '>#>user_name<#<' || 'sepp';
-my $sepp_uid         = '>#>user_uid<#<'  || '65409';
+my $RE_MATCH          = qr{[0-9a-zA-Z_.-]+};
+my $SEPP_OS_DETECTOR  = '/tmp/SEPP.OS.DETECTOR';
+my $CFGFILE;          ### default at = '/usr/sepp/conf/OSDetector.conf';
+my $OS                = $^O;
+my %DEFAULTDIR        = ( 'sepp' => '/usr/sepp', 
+                          'pack' => '/usr/pack' );
+my $DEFAULT_SEPP_NAME = 'sepp';
+my $DEFAULT_SEPP_UID  = '65409';
+# the temporary file $SEPP_OS_DETECTOR should be a file created by sepp 
+# or root (security reasons) ... so this this DEFAULT_SEPP information
+# is necessary here
+
+### BEGIN Tetre2 Integration ###
+### if you don't manage your system with Tetre2 skip to END TETRE2 Integration
+
+# check if the SEPP system is configured and managed by the Template Tree 2 
+# (Tetre2) system, otherwise set variables to default values
+
+# this variables are automatically replaces by Tetre2
+my $_sepp_name_tetre2    = '>#>user_name<#<';
+my $_sepp_uid_gid_tetre2 = '>#>user_id<#<';
+my $_sepp_uid_tetre2     = $_sepp_uid_gid_tetre2  =~ s/:[\d]*$//;
+
+$DEFAULT_SEPP_NAME       = $_sepp_name_tetre2 ne '>#>user_name<#<'  ? $_sepp_name_tetre2 : $DEFAULT_SEPP_NAME;
+$DEFAULT_SEPP_UID        = $_sepp_uid_gid_tetre2 ne '>#>user_id<#<' ? $_sepp_uid_tetre2  : $DEFAULT_SEPP_UID;
+
+# END TeTre2 Integration
 
 sub parse_config ($)
 {
@@ -189,11 +209,13 @@ sub evaluate_dirs ($;@)
 sub exists_stored_evaluation ()
 {
     if (-f "$SEPP_OS_DETECTOR") {
-        my $sepp_os_detector_uid = (stat $SEPP_OS_DETECTOR)[4]
-        if (not ($sepp_os_detector_user == 0 || $sepp_os_detector_user == $sepp_uid )) {
-	   print STDERR "$SEPP_OS_DETECTOR has owner $sepp_os_detector_uid \n";
+        my $_sepp_os_detector_uid = (stat $SEPP_OS_DETECTOR)[4];
+        if (not ($_sepp_os_detector_uid == 0 || $_sepp_os_detector_uid == $DEFAULT_SEPP_UID )) {
+           my @file_owner = getpwuid($_sepp_os_detector_uid);
+           my $name = $file_owner[0];
+           print STDERR "WARNING: $SEPP_OS_DETECTOR has owner $_sepp_os_detector_uid ($name)!!! \n";
            return undef;
-	}
+        }
         return 'true';
     }
     else {
@@ -234,8 +256,9 @@ sub write_evaluation (@)
 
 sub get_compatible_os(%) 
 {
-    my %DIR = @_ || %DEFAULTDIR;
-    $CFGFILE = "$DIR{'sepp'}/conf/osdetector.conf";
+    my %DIR = @_;
+    if (not exists $DIR{'sepp'}) { %DIR = %DEFAULTDIR; };
+    $CFGFILE = "$DIR{'sepp'}/conf/OSDetector.conf";
     my @COMPATS;
     if (exists_stored_evaluation()){
       @COMPATS = get_stored_evaluation();
@@ -252,7 +275,7 @@ sub get_compatible_os(%)
 sub get_existing_execdir($;%)
 {
     my $PackDir = shift;
-    if ($PackDir = 'SEPP::OSDetector') {
+    if ($PackDir eq 'SEPP::OSDetector') {
        $PackDir = shift;
     }
     my %DIR = @_ || %DEFAULTDIR;
