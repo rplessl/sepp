@@ -1,81 +1,13 @@
-1 April 2000 : Start of incompatible changes
-============================================
+TODOs for SEPP
+==============
 
-- SEPP library in /usr/sepp/lib/perl/SEPP      *** DONE
+~ November 2007: 
+================
 
-  This library should make it possible to modularize SEPP and
-  put the code in a common directory.
-  
-- SeppStart.pm -> SEPP::Start, stubs completely changed   *** DONE
 
-  The way applications get started is more clean:
-  
-  | use SEPP::Start;
-  | Start "vim-5.6nodeps-ds", "isg-net";
-  
-- SEPP::FitOS: standard multi-platform support   *** DONE
 
-  SEPP::FitOS will be a module useable in start.pl to support
-  in a easy and standard way multi platform packages.
-  
-  | use SEPP::FitOS;
-  | $OS = FitOS 'sun4m-sun-solaris2.5.1', 'sun4u-sun-solaris2.6';
-  | AppRun "$PackDir/$OS/bin";
-
-  => addition of sbin/shtool
-  
-- removal of sepprc.system and ~/.sepprc:   *** BEGUN: 1 DAY
-
-  These configuration files were seldom used other than determining
-  the "SEPP Domain". The SEPP Domain will be thus configured
-  in sepp.conf and the reading of such global package configurations
-  will be parhaps (if need arises) be reimplemented with a facultative
-  module SEPP::UserConfig.
-  
-  => New section in sepp.conf: "sepp domain"
-
-- Splitting of SEPP disks into SEPP original disks and  *** 2 DAYS
-  SEPP mirror disks
-  
-  => New section in sepp.conf: "sepp mirror disks"
-
-- seppinstall script for easy installation or upgrade. *** BEGUN: 3 DAYS
-  The sepp distribution will extract in sepp-2000xxx.xxx
-  (installation won't be anymore done through unpacking in /usr/sepp).
-
-- SEPP error handler for errors in start.pl (better error *** 1 DAY
-  messages for packages that use new features with an old SEPP version)
-
-- no regular expressions in META file for binaries/man-pages and short   *** 2 DAYS
-  description for each binary.
-
-  => New syntax for 'binaries' and 'manpages' sections:
-
-  *** binaries ***
-  >>bin/vimsh   the vim shell
-  vim		main executable
-  vimtutor	vim tutorial
-  xxd		hex-dump utility
-
-  *** manpages ***
-  man/man1/vimsh.1
-  man/man1/vim.1
-  man/man1/vimtutor.1
-  man/man1/xxd.1
-
-- removal of "Alarm feature"  *** 0 DAYS
-
-- seppadm more flexible about unknown META sections (future compatiblity) *** 0 DAYS
-
-- platform-triplets (shtool guessos) in META 'operating system'.  *** 2 DAYS
-
-- real multiplatform /usr/sepp tree   **** ???
-  /usr/sepp/sun4m-sun-solaris2.6/bin (target platforms)
-  viele sachen koennten gemeinsam sein: conf, var, html, stub...
-
-Total estimated work: 10 DAYS + 5 DAYS polishing / bug-fixing
-  
-~ June 2000 : End of incompatible changes, stable release
+~ June 2000 : End of incompatible changes, stable release 
+(as written by David Schweikert)
 =========================================================
 
 Planned TODO items:
@@ -83,7 +15,7 @@ Planned TODO items:
 - allow dependencies with globs (e.g. perl-5.6*-ds)
 
 - build rsync server for free packages and add support to seppadm
-  install/mirror to use it.
+  install/mirror to use it.  *** DONE with sepp-get ***
 
 - put name of local site into web-page.
 

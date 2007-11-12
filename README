@@ -2,13 +2,16 @@ SEPP - Software Deployment System
 ---------------------------------
 Installation instructions
 =========================
-by Tobias Oetiker <oetiker@ee.ethz.ch> (2006-02-08.1)
+by Tobias Oetiker <tobi@oetiker.ch> (2006-02-08.1)
+by Roman Plessl <roman.plessl@oetiker.ch> (2007-11-12)
 
+* create a SEPP install directory and give it to your local SEPP user. 
 
-* create a SEPP install directory and give it to your
-  local SEPP user. All SEPP applications will be installed
-  as that user. Note that you MUST use the directory /usr/sepp
-  as long as you want to share SEPP packages with other people.
+  All SEPP applications will be installed as that user. Note that you 
+  MUST use the directory /usr/sepp and /usr/pack as long as you want to 
+  share SEPP packages with other people. /usr/sepp and /usr/pack are
+  the default pathes.
+
   Often software relies on absolute path-names.
 
   # mkdir /usr/sepp; cd /usr/sepp
@@ -21,20 +24,13 @@ by Tobias Oetiker <oetiker@ee.ethz.ch> (2006-02-08.1)
   as the SEPP user)
 
   % cd /usr/sepp
-  % wget http://www.sepp.ee.ethz.ch/pub/sepp-1.4.2.tar.Z -O - | gunzip |tar xf -
+  % wget http://oss.oetiker.ch/pub/sepp-1.5.0.tar.bz2 -O - | bunzip2 | tar xf -
 
-* add the platform binaries. If you already have local installations of
-  rsync and perl then you just add symbolic links:
+* Add the symlinks to perl and rsync by just add symbolic links:
 
   % cd /usr/sepp
   % ln -s /usr/bin/rsync sbin/rsync
   % ln -s /usr/bin/perl sbin/perl
-
-  if your system has no perl and rsync then you can use the platform
-  binaries from the SEPP website:
-
-  % cd /usr/sepp
-  % wget http://www.sepp.ee.ethz.ch/pub/sepp.sbin.i686-debian-linux3.1.tar.gz -O - | gunzip |tar xf -
 
 * the next step is to setup your package repository. If you have only one
   SEPP partition, then this is simple:
@@ -92,20 +88,9 @@ by Tobias Oetiker <oetiker@ee.ethz.ch> (2006-02-08.1)
 
 * You can now either start building your own sepp packages following the
   instructions in html/seppdoc.pdf or you can use sepp-get to fetch some
-  packages of our public package server. Prepare your sepp-get.conf file and
-  you are ready to go:
+  packages of our public package server. 
 
-  % cd /usr/sepp/conf
-  % cp sepp-get.conf-dist sepp-get.conf
-  % vi sepp-get.conf
-
-  get a list of available packages
-
-  % /usr/sepp/sbin/sepp-get search .
-  
-  Install a package
-
-  % /usr/sepp/sbin/sepp-get install joe-3.3-to
+  sepp-get is available from http://oss.oetiker.ch/optools.
 
 If you are lucky to work in an environment where other people are using SEPP
 as well, you might want to talk to them about connecting your SEPP setup

@@ -8,4 +8,4 @@ exclude = *
 include = i686*linux
 
 *** http://computing.ee.ethz.ch/sepp/pack ***
-# check the sepprsync manpage for details
+# check the sepp-get manpage for details
