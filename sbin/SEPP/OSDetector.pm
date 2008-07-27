@@ -4,9 +4,15 @@ use strict;
 use Config::Grammar;
 use Data::Dumper;
 
-use vars qw($VERSION);
+use vars qw($CONF $VERSION);
 
-$VERSION = 0.10;
+$VERSION = 0.11;
+
+sub get_conf {
+   $CONF = shift;
+   print Dumper($CONF);
+}
+
 
 # The RE contains the regexp for all posible OS descriptions
 # like amd64-linux-ubuntu6.10. The rule of thumb for this is
@@ -25,6 +31,13 @@ my %DEFAULTDIR        = ( 'sepp' => '/usr/sepp',
                           'pack' => '/usr/pack' );
 my $DEFAULT_SEPP_NAME = 'sepp';
 my $DEFAULT_SEPP_UID  = '65409';
+
+sub push_conf {
+    $CONF = shift;
+    if ($CONF->{'sepp user'}[0]){
+       $DEFAULT_SEPP_NAME = $CONF->{'sepp user'}[0];
+    }
+}
 # the temporary file $SEPP_OS_DETECTOR should be a file created by sepp 
 # or root (security reasons) ... so this this DEFAULT_SEPP information
 # is necessary here
@@ -36,12 +49,22 @@ my $DEFAULT_SEPP_UID  = '65409';
 # (Tetre2) system, otherwise set variables to default values
 
 # this variables are automatically replaces by Tetre2
-my $_sepp_name_tetre2    = '>#>user_name<#<';
-my $_sepp_uid_gid_tetre2 = '>#>user_id<#<';
-my $_sepp_uid_tetre2     = $_sepp_uid_gid_tetre2  =~ s/:[\d]*$//;
+my $_sepp_name_tetre2    = undef;
+my $_sepp_uid_gid_tetre2 = undef;
+my $_sepp_uid_tetre2     = undef;
 
-$DEFAULT_SEPP_NAME       = $_sepp_name_tetre2 ne '>#>user_name<#<'  ? $_sepp_name_tetre2 : $DEFAULT_SEPP_NAME;
-$DEFAULT_SEPP_UID        = $_sepp_uid_gid_tetre2 ne '>#>user_id<#<' ? $_sepp_uid_tetre2  : $DEFAULT_SEPP_UID;
+if( '>#>user_name<#<' !~ m/>#>/ ) {   
+   $_sepp_name_tetre2    = '>#>user_name<#<';
+}
+if( '>#>user_id<#<' !~ m/>#>/ ) {    
+   $_sepp_uid_gid_tetre2 = '>#>user_id<#<';
+}
+if ($_sepp_uid_gid_tetre2 ) {
+   $_sepp_uid_tetre2  = $_sepp_uid_gid_tetre2  =~ s/:[\d]*$//;
+}
+
+$DEFAULT_SEPP_NAME       = $_sepp_name_tetre2    ? $_sepp_name_tetre2 : $DEFAULT_SEPP_NAME;
+$DEFAULT_SEPP_UID        = $_sepp_uid_gid_tetre2 ? $_sepp_uid_tetre2  : $DEFAULT_SEPP_UID;
 
 # END TeTre2 Integration
 
@@ -210,7 +233,11 @@ sub exists_stored_evaluation ()
 {
     if (-f "$SEPP_OS_DETECTOR") {
         my $_sepp_os_detector_uid = (stat $SEPP_OS_DETECTOR)[4];
-        if (not ($_sepp_os_detector_uid == 0 || $_sepp_os_detector_uid == $DEFAULT_SEPP_UID )) {
+        my @_sepp_user = getpwnam($DEFAULT_SEPP_NAME);
+        my $_sepp_user_uid = $_sepp_user[2];
+        if (not ($_sepp_os_detector_uid == 0 || 
+                 $_sepp_os_detector_uid == $DEFAULT_SEPP_UID ||
+                 $_sepp_os_detector_uid == $_sepp_user_uid)) {
            my @file_owner = getpwuid($_sepp_os_detector_uid);
            my $name = $file_owner[0];
            print STDERR "WARNING: $SEPP_OS_DETECTOR has owner $_sepp_os_detector_uid ($name)!!! \n";
@@ -241,7 +268,7 @@ sub write_evaluation (@)
 {
     my @COMPATS = @_;
 
-    if (!exists_stored_evaluation()) {
+    if (not defined(exists_stored_evaluation())) {
         open(SEPP_OS_DETECTOR, ">$SEPP_OS_DETECTOR");
         foreach (@COMPATS) {
             print SEPP_OS_DETECTOR "$_\n";

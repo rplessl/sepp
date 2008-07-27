@@ -617,14 +617,15 @@ sub Main ()
     # --platform=xxxx
     $$CONF{'preferred operating system'}[0] = $platform;
   }
-
-
+  
   if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}})
     {
       #set up the osx module with the apropriate parameters
       require osx_stubber;
       osx_stubber::init(\%DIR,\&Error,\&Warning,\&Info,\&ReadMETA,\&ReadConf);
     }
+
+  SEPP::OSDetector::push_conf($CONF);
 
   my $FUNC = shift @ARGV;
   Usage unless $FUNC;
@@ -1889,7 +1890,7 @@ USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
        seppadm webbuild [--localonly] [--all]
        seppadm prefix_bundle package pathname...
 
-       Release: 1.5.0
+       Release: 1.5.1
 
 ";
 	 exit 0;
