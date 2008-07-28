@@ -3,7 +3,7 @@ SEPP - Software Deployment System
 Installation instructions
 =========================
 by Tobias Oetiker <tobi@oetiker.ch> (2006-02-08.1)
-by Roman Plessl <roman.plessl@oetiker.ch> (2007-11-12)
+by Roman Plessl <roman.plessl@oetiker.ch> (2008-07-28)
 
 * create a SEPP install directory and give it to your local SEPP user. 
 
@@ -24,7 +24,7 @@ by Roman Plessl <roman.plessl@oetiker.ch> (2007-11-12)
   as the SEPP user)
 
   % cd /usr/sepp
-  % wget http://oss.oetiker.ch/pub/sepp-1.5.1.tar.bz2 -O - | bunzip2 | tar xf -
+  % wget http://oss.oetiker.ch/op-sepp/pub/sepp-1.5.1.tar.bz2 -O - | bunzip2 | tar xf -
 
 * Add the symlinks to perl and rsync by just add symbolic links:
 
@@ -85,6 +85,23 @@ by Roman Plessl <roman.plessl@oetiker.ch> (2007-11-12)
 
   % touch /usr/sepp/SEPP.packlist
   % touch /usr/sepp/conf/autosepp_indirect
+
+* Create a init script running at machine startup to create the 
+  /tmp/SEPP.OS.DETECTOR file owned by root or the SEPP user. 
+
+  This init script should be done for security reasons!
+
+  % vi sepp_osdetector.init.sh
+  % cp sepp_osdetector.init.sh /etc/init.d/sepp_osdetector.sh
+
+  add to wished runlevels like
+
+  % ln -s ../init.d/sepp_osdetector.sh /etc/rc2.d/S50sepp_osdetector.sh
+
+  change owner and permissions of sepp_osdetector.sh
+
+  % chown root:root /etc/init.d/sepp_osdetector.sh
+  % chmod 644       /etc/init.d/sepp_osdetector.sh
 
 * You can now either start building your own sepp packages following the
   instructions in html/seppdoc.pdf or you can use sepp-get to fetch some

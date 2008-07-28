@@ -1,18 +1,25 @@
+BEGIN {
+    require Config::Grammar;
+    if($Config::Grammar::VERSION ge '1.10') {
+        require Config::Grammar::Dynamic;
+        @ISA = qw(Config::Grammar::Dynamic);
+    }
+    else {
+        @ISA = qw(Config::Grammar);
+    }
+}
+
 package SEPP::OSDetector;
 
 use strict;
-use Config::Grammar;
-use Data::Dumper;
-
 use vars qw($CONF $VERSION);
 
 $VERSION = 0.11;
 
+# this is used to push the config from seppadm to this module
 sub get_conf {
    $CONF = shift;
-   print Dumper($CONF);
 }
-
 
 # The RE contains the regexp for all posible OS descriptions
 # like amd64-linux-ubuntu6.10. The rule of thumb for this is
