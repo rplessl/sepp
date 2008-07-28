@@ -1,6 +1,8 @@
 2008-06-28
 ----------
 * released 1.5.1
+* added Documentation about SEPP::OSDetector and init script
+* SEPP::OSDetector: compatibility with Config::Grammar 1.10 and newer
 * SEPP::OSDetector: global configuration of SEPP user is given from 
   seppadm to SEPP::OSDetector now
 * SEPP::OSDetector: fixed owner ship detection of /tmp/SEPP.OS.DETECTOR
