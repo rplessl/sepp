@@ -1,9 +1,10 @@
 TODOs for SEPP
 ==============
 
-~ November 2007: 
-================
-
+~ Juli 2008: 
+============
+- Make SEPP::OSDetector also running with Config::Grammar
+  1.10 and newer
 
 
 ~ June 2000 : End of incompatible changes, stable release 

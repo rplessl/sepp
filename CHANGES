@@ -1,3 +1,9 @@
+2008-06-28
+----------
+* released 1.5.1
+* SEPP::OSDetector: global configuration of SEPP user is given from 
+  seppadm to SEPP::OSDetector now
+* SEPP::OSDetector: fixed owner ship detection of /tmp/SEPP.OS.DETECTOR
 * seppadm: chdir to / when switching user since the original directory
   may not be readable (eg /root)
 
