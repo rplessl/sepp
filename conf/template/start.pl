@@ -50,11 +50,38 @@
 # AppExec just logs the fact that the application is going to
 # be started.
 
-if($^O eq 'linux') {
-    if ($OsName =~ m/ia32/) {
-        SetENV "GCONV_PATH", "/emul/ia32-linux/usr/lib/gconv";
-	SetENV "XLOCALEDIR", "/emul/ia32-linux/usr/X11R6/lib/X11/locale";
-    }
-}
+#############################################################
+#
+# if you are still using SEPP 1.4.x at some site you can use 
+# the following compatibility code for detecting linux sytems
+# and other unix systems (linux binaries compiled on debian 
+# sarge)
+#
+# if($^O eq 'solaris') {
+#        $os = 'sun4u-sun-solaris2.9';
+# }
+# elsif($^O eq 'darwin') {
+#        $os = 'powerpc-apple-darwin7.4.1';
+# }
+# elsif($^O eq 'linux') {
+#       $os = "ia32-linux-debian3.1";
+#       chomp($uname=`/bin/uname -m`);
+#       if($uname eq 'x86_64' and -d "$PackDir/amd64-linux-debian3.1") {
+#               $os="amd64-linux-debian3.1";
+#       }
+# }
+# AppRun "$PackDir/$os/bin";
+#
+# ### THIS IS THE NEW CODE ###################################
+#
+# if($^O eq 'linux') {
+#    if ($OsName =~ m/^amd64.*ubuntu.*$/) {
+#       ($OsName32 = $OsName)=~ s/amd64/ia32/;
+#       if (! -d "$PackDir/$OsName" and -d "$PackDir/$OsName32" ) {
+#          SetENV "GCONV_PATH", "/usr/lib32/gconv";
+#	   SetENV "XLOCALEDIR", "/usr/lib32/locale";
+#       }
+#    }
+# }
 
 AppRun "$PackDir/$OsName/bin";
