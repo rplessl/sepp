@@ -1,5 +1,5 @@
 ## REMOVE THIS LINE WHEN YOU HAVE EDITED THIS FILE ####################
-## $Id: INSTALL 261 2007-07-06 12:52:47Z hackerj $
+## $Id$
 #!/bin/bash
 PACKAGER=mo
 VERSION=3.1
