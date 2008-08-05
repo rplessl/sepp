@@ -366,6 +366,10 @@ or
 
    my @compatibles = SEPP::OSDetector::get_compatible_os( [ %DIR ] );
 
+or
+
+   my %os_triplets = SEPP::OSDetector::get_all_platform_triplets( [ %DIR ] );
+
 =head1 DESCRIPTION
 
 This module provides two functions for compiling new SEPP packages 
@@ -423,6 +427,17 @@ that means, all this compiled versions are runnable on the
 Ubuntu 6.10 system (i.e. GLIBC version is not newer). The 
 first entry in the array is the best match, the last the
 worst.
+
+=item B<SEPP::OSDetector::get_all_platform_triplets( [ %DIR ] )>
+
+[ The paramter %DIR is optional and contains the path information
+
+  %DIR = ( 'sepp' => '/usr/sepp', 
+           'pack' => '/usr/pack' );  
+]
+
+Returns a perl hash with all valid cpu - os - distribution triplets
+which is needed e.g. by seppadm expose.
 
 =back
 

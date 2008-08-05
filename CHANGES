@@ -1,4 +1,8 @@
-2008-06-28
+2008-08-05
+----------
+* added compatiblity mode for all SEPP arch names for seppadm expose
+
+2008-07-28
 ----------
 * released 1.5.1
 * added Documentation about SEPP::OSDetector and init script
