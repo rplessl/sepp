@@ -2111,13 +2111,32 @@ sub CheckAppName ( $ ){
 sub CheckDependency($) {
     my ($dep) = @_;
     my $dep_pack;
-    my @compat_os = SEPP::OSDetector::get_compatible_os( %DIR );
+
+    my %platform_triplets = SEPP::OSDetector::get_all_platform_triplets( %DIR );
+
+    # compat mode for old sepp packages 
+    my %compat_platform_triplets = (
+      'sun4u-sun-solaris2.8'      => { OS => 'solaris' },
+      'i686-debian-linux3.1'      => { OS => 'linux' },
+      'amd64-debian-linux3.1'     => { OS => 'linux' },
+      'powerpc-apple-darwin7.4.1' => { OS => 'darwin' },
+    );
+    for my $os (keys %compat_platform_triplets) {
+       $platform_triplets{$os} = 1;
+    }
+    # end compat mode
+
     if($dep =~ /^(\S+)\s*:\s*([^\s,]+(?:\s*,\s*[^\s,]+)*)$/) {
         $dep_pack = $1;
         my @dep_arch = split(/\s*,\s*/,$2);
         my $is_my_arch=0;
         for my $a (@dep_arch) {
-            $is_my_arch = 1 if (grep {$a} @compat_os);
+            defined $platform_triplets{$a} or do {
+                warn "ERROR: platform $a unknown\n";
+                return 0;
+            };
+            my $dep_OS = $platform_triplets{$a};
+            $is_my_arch = 1 if $OS eq $dep_OS;
         }
         return 1 unless $is_my_arch;
     }

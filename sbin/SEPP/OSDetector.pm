@@ -317,6 +317,41 @@ sub get_existing_execdir($;%)
     return evaluate_dirs($PackDir, @COMPATS);
 }
 
+sub get_all_platform_triplets(%) 
+{
+    my %DIR = @_;
+    if (not exists $DIR{'sepp'}) { %DIR = %DEFAULTDIR; };
+    $CFGFILE = "$DIR{'sepp'}/conf/OSDetector.conf";
+    my $cfg      = parse_config($CFGFILE);
+    my %triplets;
+    for my $os (keys %{$cfg}) {
+        next if $os eq 'Compatibility';
+
+        my @valid_distro;
+        my @distros = keys %{$cfg->{$os}->{'Distribution'}};
+        for my $distrofamily (@distros){
+           if (grep { $_ =~ /_text/ } keys %{$cfg->{$os}->{'Distribution'}->{$distrofamily}}) {
+               unshift @valid_distro, $distrofamily;
+           }
+           my @distrosubfamilies = grep { $_ !~ /_text/ } keys %{$cfg->{$os}->{'Distribution'}->{$distrofamily}};
+           for my $distrosubfamily (@distrosubfamilies){
+                if (grep { $_ =~ /_text/ } keys %{$cfg->{$os}->{'Distribution'}->{$distrofamily}->{$distrosubfamily}}) {
+                    unshift @valid_distro, $distrosubfamily;
+                }
+           }
+        }   
+
+        my @valid_cpus   = evaluate_cpu($cfg);
+
+        for my $distribution (@valid_distro) {
+           for my $cpu (@valid_cpus) {
+               $triplets{"$cpu-$os-$distribution"} = 1;
+           }
+        }
+    }
+    return (%triplets);
+}
+
 __END__
 
 =head1 NAME

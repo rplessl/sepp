@@ -17,7 +17,6 @@ use vars qw(%opt);
 
 use Getopt::Long 2.25 qw(:config posix_default);
 use Pod::Usage 1.14;
-use Data::Dumper;
 
 use Sys::Hostname 1.1;
 use POSIX;
