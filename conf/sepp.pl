@@ -11,10 +11,7 @@
 # * 03.1.2007 rp added support for different local/sepp usernames
 
 $ENV{PATH}="/usr/bin";
-my $key = '';
-
-if ($ARGV[0] =~ m/^([a-zA-Z0-9_.-]+)$/ ) {
-$key = $1;
+my $key = $ARGV[0];
 
 ##############################################################
 # if there is a  file called
