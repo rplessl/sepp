@@ -371,27 +371,29 @@ function perlmodule (){
  cd $WORKDIR
 }
 
-function kde314_3rdparty () {
-  KDE=kde-3.1.4-to
-  KPFX=/usr/pack/$KDE
+function pythonmodule() {
+    url=$1 ; shift
+    pkg=$1 ; shift
+    PYVER="`/usr/sepp/bin/python --version 2>&1 | awk '{ print $2 }'`"
+    PPATH="${PREFIX}/lib/python${PYVER}/site-packages"
+    if [ -n "${PYTHONPATH:-}" ] ; then
+        PPATH="${PPATH}:${PYTHONPATH}"
+    fi
+    
+    export PYTHONPATH="${PPATH}"
 
-  export QTDIR=${KPFX}/${ARCH}
-  export KDEDIRS=${PREFIX}:${KPFX}/${ARCH}
-  export KDEDIR=${KPFX}/${ARCH}
-  export PATH=/usr/pack/gcc-3.2.3-mo/$ARCH/bin:${KPFX}/${ARCH}/bin:$PATH
-  simplebuild $1 $2 --disable-debug --enable-final --with-pic \
-        --with-extra-libs=${EPREFIX}/lib:${KPFX}/${ARCH}/lib:$XLIB \
-        --with-extra-includes=${PREFIX}/include:${KPFX}/include:$XINC \
-        --with-qt-libraries=${KPFX}/${ARCH}/lib \
-        --with-qt-includes=${KPFX}/include $3 $4 $5 $6 $7 $8 $9
-  cat <<START >$PREFIX/SEPP/start.pl
-my %os = ( 'solaris' => 'sun4u-sun-solaris2.9',
-           'linux' => 'i686-debian-linux3.0' );
-PreENV 'PATH', "$KPFX/\$os{\$^O}/bin";
-SetENV 'KDEDIRS', "\$PackDir/$os{$^O}:\$PackDir:$KPFX/\$os{\$^O}";
-AppExec "\$PackDir/\$os{\$^O}/bin";
-START
-  chmod 755 $PREFIX/SEPP/start.pl
+    if prepare $url $pkg ; then
+        cd ${SRCDIR}
+
+        /usr/sepp/bin/python setup.py build $(echo ${PY_BUILD_OPTS:-}) 2>&1 | tee -a "../$pkg.output"
+        [ ${PIPESTATUS[0]} = 0 ] || exit ${PIPESTATUS[0]}
+        
+        /usr/sepp/bin/python setup.py install --prefix=${PREFIX} --exec-prefix=${EPREFIX} $(echo ${PY_INST_OPTS:-})  2>&1 | tee -a "../$pkg.output"
+        [ ${PIPESTATUS[0]} = 0 ] || exit ${PIPESTATUS[0]}
+        
+        cd ${WORKDIR}
+        touch "$pkg.ok"
+    fi
 }
 
 # vim: ft=sh

@@ -1,9 +1,9 @@
 ## REMOVE THIS LINE WHEN YOU HAVE EDITED THIS FILE ####################
 ## $Id$
 #!/bin/bash
-PACKAGER=mo
-VERSION=3.1
 PROD=gawk
+VERSION=3.1
+PACKAGER=mo
 
 . `dirname $0`/INSTALL.lib
 
@@ -36,6 +36,9 @@ echo ---------------------------------
 echo Compilers $CC $CXX $F77
 echo --------------------------------- 
 
+## patch is applied to the unpacked source when simplebuild()
+## or prepare() is called
+
 cat <<'PATCH' >$WORKDIR/patch
 --- one.orig    Fri Mar 19 12:49:05 2004
 +++ one Fri Mar 19 12:48:56 2004
@@ -43,17 +46,29 @@ cat <<'PATCH' >$WORKDIR/patch
 -Hellop
 +Hello
 PATCH
+
 # for debian patches *.diff.gz
 debpatch http://security.ubuntu.com/ubuntu/pool/main/z/zip zip_2.30-6ubuntu0.1.diff.gz
 
-simplebuild http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz   --with-fun-option --disable-gugus
+## build software from source, using configure, make and make install
+simplebuild  http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz \
+    --with-fun-option \
+    --disable-gugus
 
-
-## build a perl module
+## build a perl module using module source URL
 perlmodule http://www.cpan.org/modules/by-module/DBD/ DBD-Pg-1.22.tar.gz
+
+## convenient way to build a perl module, using only the module name
+perlmodule Time::HiRes
+
+## build a python module using module source URL
+pythonmodule http://jamwt.com/downloads/apricot apricot-0.2.tar.gz 
 
 ## just fetch and  unpack
 if prepare http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz
 then
   # do something, starting in the unpacked softwares root dir
+   ./configure --prefix=${PREFIX} --exec-prefix=${EPREFIX} --with-my-option
+   make
+   make install
 fi
