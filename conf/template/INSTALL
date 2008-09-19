@@ -9,8 +9,13 @@ PACKAGER=mo
 
 ## set the compiler and PATH
 if [ -e /etc/debian_version -o $OS = Darwin ]; then 
-   # we use the debian compiler (3.3)
-   export CC=gcc CXX=g++ F77=g77
+   # we use the OS included GCC compiler
+   if [ -e /usr/bin/gfortran ]; then
+      export F77=gfortran
+   else
+      export F77=g77
+   fi
+   export CC=gcc CXX=g++
    export PATH=/usr/bin:${PATH}
 else
    OSREL=`/bin/uname -r`
@@ -20,7 +25,7 @@ else
 	   export PATH=/usr/bin:/usr/sfw/bin:/usr/ccs/bin:${PATH}
    else
 	   # there is no native gcc compiler 
-	   v=3.4.3
+	   v=4.2.3
 	   export CC=gcc-$v CXX=g++-$v F77=g77-$v
 	   path_gcc=`$CC --seppdebug 2>&1 | grep Path: | awk '{print $2}'`
 	   export PATH=`dirname $path_gcc`:${PATH}
