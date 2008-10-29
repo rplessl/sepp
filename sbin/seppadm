@@ -782,8 +782,8 @@ sub Environment ()
     my ($packname,$packversion,$packauthor) = CheckAppName $2;
     $packname = "${packname}-${packversion}-${packauthor}";
 
-    my $current_os_name = (SEPP::OSDetector::get_compatible_os( %DIR ))[0];
-    my $existing_os_name = (SEPP::OSDetector::get_existing_execdir( $PackDir, %DIR ));
+    my $current_os_name =  (SEPP::OSDetector::get_compatible_os( %DIR ))[0];
+    my $existing_os_name = (SEPP::OSDetector::get_existing_execdir( "$DIR{'pack'}/$packname", %DIR )) || '';       
 
     foreach my $line (@{$$CONF{'pathes and variables'}}) {
        $line =~ m|^\s*(\S+)\s*=\s*(.+?)\s*$| || Warning "Can't parse $line";
