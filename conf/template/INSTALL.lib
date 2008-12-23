@@ -212,7 +212,8 @@ function simplebuild (){
    shift
    simpleprogram=$1;shift   
    if [ ! -f configure ]; then
-        confdir=`ls */configure */*/configure| head -1`
+        confdir=`ls -1f source/configure src/configure */configure| head -1`
+	echo "found $confdir"
         upone=".."
         if [ -f "$confdir" ]; then
                 cd `dirname $confdir`
