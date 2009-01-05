@@ -213,7 +213,7 @@ sub evaluate_compat ($$)
     my $detect_distro = shift;
 
     my $compat_string = $cfg->{'Compatibility'}->{$detect_distro}{_text};
-    my @compats = split /\s*\n/, $compat_string;
+    my @compats = split /\n/, $compat_string;
     unshift @compats, $detect_distro;
 
     return @compats;
