@@ -171,7 +171,7 @@ function prepare () {
 		PATCHES=`cd debian/patches && ls`
 		for p in $PATCHES; do
 			[ "$p" = "00list" ] && continue
-			[ -e debian/patched/$p ] && continue
+			[ -e debian/patches/$p ] && continue
 			echo "### applying $p:"
 			gpatch -p1 <$p
 		done
