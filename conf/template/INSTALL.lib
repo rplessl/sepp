@@ -173,7 +173,7 @@ function prepare () {
 			[ "$p" = "00list" ] && continue
 			[ -f debian/patches/$p ] || continue
 			echo "### applying $p:"
-			gpatch -p0 < debian/patches/$p
+ 			gpatch -p1 -l < debian/patches/$p
 		done
 	fi
 	rm $WORKDIR/patch-deb
