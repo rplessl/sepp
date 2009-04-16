@@ -227,7 +227,7 @@ sub evaluate_dirs ($;@)
     my $valid_directory;
 
     foreach (@compats) {
-        if (-d "$PackDir/$_" || -L "$PackDir/$_" ) {
+        if (-d "$PackDir/$_" or -L "$PackDir/$_" ) {
             $valid_directory = $_;
             last;
         }
