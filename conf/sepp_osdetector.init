@@ -32,7 +32,7 @@ fi
 
 
 if [ $system = redhat ]; then
-        . $initdir/functions
+        . /etc/init.d/functions
 fi
 
 if [ $system = suse ]; then
