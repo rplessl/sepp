@@ -69,7 +69,7 @@ function start()
 	HOME=/tmp
 	export HOME
 
-	/usr/sepp/sbin/seppadm environment test-1.0-rp > /dev/null
+	/usr/sepp/sbin/seppadm environment seppcheck-1.0-rp > /dev/null
 }
 
 
