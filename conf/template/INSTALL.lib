@@ -332,7 +332,7 @@ function perlmodule (){
 	temp=$(grep "^$path " 02packages.details.txt|head -1)
 	temp="${temp##* }"
 	pack="${temp##*/}"
-	path=http://cpan.mirror.solnet.ch/authors/id/"${temp%/*}"
+	path=ftp://sunsite.cnlab-switch.ch/mirror/CPAN/authors/id/"${temp%/*}"
  else
         pack=${1:-""};shift
  fi
