@@ -325,14 +325,14 @@ function kdemake (){
 function perlmodule (){
  path=$1;shift
  if [ "${path##*/}" = "${path}" ]; then
-	wget --quiet --timestamping ftp://sunsite.cnlab-switch.ch/mirror/CPAN/modules/02packages.details.txt.gz 
+	wget --quiet --timestamping ftp://mirror.switch.ch/mirror/CPAN/modules/02packages.details.txt.gz 
 	if [ 02packages.details.txt.gz -nt 02packages.details.txt ]; then
 		gunzip -c 02packages.details.txt.gz > 02packages.details.txt
 	fi
 	temp=$(grep "^$path " 02packages.details.txt|head -1)
 	temp="${temp##* }"
 	pack="${temp##*/}"
-	path=ftp://sunsite.cnlab-switch.ch/mirror/CPAN/authors/id/"${temp%/*}"
+	path=ftp://mirror.switch.ch/mirror/CPAN/authors/id/"${temp%/*}"
  else
         pack=${1:-""};shift
  fi
