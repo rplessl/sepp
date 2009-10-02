@@ -8,6 +8,8 @@ B<PreENV> I<EnvVar>B<,> I<Value>B<,> I<Value> ...
 
 B<SetENV> I<EnvVar>B<,> I<Value>
 
+B<ExistENV> I<EnvVar>
+
 B<AppRun> I<BinaryPath>
 
 B<AppExec> I<BinaryPath>
@@ -30,6 +32,11 @@ using the ':' as a separator. C<PreENV "PATH", "/usr/sbin">
 
 Set I<EnvVar> to I<Value>
 
+=item B<ExistENV> I<EnvVar>
+
+Check the existance and the value in an environment variable I<EnvVar>.
+Returns the value or undef iff not defined.
+ 
 =item B<AppRun> I<BinaryPath>
 
 Run the application specified through the contents of $0. The argument
@@ -61,6 +68,7 @@ No Idea ... But if you tell me I'll fix 'em.
 =head1 AUTHOR
 
 Tobias Oetiker <oetiker@ee.ethz.ch>
+Roman Plessl <roman.plessl@oetiker.ch>
 
 =cut
 
@@ -85,11 +93,11 @@ BEGIN{
   
   # so to access configuration variables you have to
   # use $CF::maildomain  or something like this ... 
+
   do {
     package CF;
     my $sysconf = '/usr/sepp/conf/sepprc.system';
 
-    
     # load some system config variables
     die "ERROR: Can't read $sysconf\n" unless -r $sysconf;
     do $sysconf;
@@ -105,13 +113,13 @@ BEGIN{
   #};
 }
 
-# Prepend "PATH", "/usr/back/home"
+# Example: PreENV "PATH", "/usr/myserver/home"
 sub PreENV ($@) {
   my($envvar,@elements) = @_;
   if (defined $ENV{$envvar}) {
-    $ENV{$envvar} = join ":", @elements, $ENV{$envvar};
+     $ENV{$envvar} = join ":", @elements, $ENV{$envvar};
   } else {
-    $ENV{$envvar} = join ":", @elements;
+     $ENV{$envvar} = join ":", @elements;
   }
 }
 
@@ -119,7 +127,22 @@ sub SetENV ($$) {
   $ENV{$_[0]}=$_[1];
 }
 
-
+sub ExistENV ($@) {
+   my ( $envvar,@elements ) = @_;
+   if ( defined $ENV{$envvar} ) {
+      # get all the entries into a list
+      my @list = split ":", $ENV{$envvar};
+      # remove possible trailing / in element
+      @elements = grep s/(.*?)\/?$/$1/, @elements;
+      # try to find the element in the list (incl. possible trailing /)
+      $exists = grep /^@elements\/?$/, @list;
+      return $exists;
+   }
+   else {
+      return undef;
+   }
+}
+    
 # get information from name of package
 sub NamAlyse ($$) {
   my $pack = $_[0];
