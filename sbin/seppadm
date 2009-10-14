@@ -48,24 +48,25 @@ available packages and keeping the local mirrors up to date.
 
 =item B<prepare> [I<pathname>/]I<package> [B<--shellonly>] [B<--noshell>]
 
-Creates a skeleton package directory. seppadm will automatically
-choose the filesystem with the most free space.
-By specifying a pathname, this automatic
-choice can be overridden.
+Creates a skeleton package directory. 
+
+seppadm will automatically choose the filesystem with the most free space
+unless there exists a file I<SKIP_FREE_DISK> in the filesystem/partition.
+By specifying a pathname, this automatic free space choice can be overridden.
 
 The package name must have the format I<application-version-maintainer>.
 The package directory will become visible as /usr/pack/I<package>.
-This directory will contain one
-subdirectory called B<SEPP> which contains a number of template files.
-These templates have to be edited to fit the package.
+This directory will contain one subdirectory called B<SEPP> which 
+contains a number of template files. These templates have to be edited 
+to fit the package.
 
 When the B<prepare> function completes, it will execute an 'install shell'
 which provides a controlled environment for application compilation and
 installation.
 
 The options [B<--shellonly>] [B<--noshell>] allow to access an already
-installed package with the install shell and not to get an install shell at
-all respectively.
+installed package with the install shell and not to get an install shell 
+at all respectively.
 
 In an AFS setting if the new package should reside in a volume of their
 own the volume must exist prior to preparing the package. As seppadm
@@ -150,19 +151,21 @@ The resulting structure in the C<macosx> directory would be:
 
 =item B<remove> I<package> [B<--final>] [B<--usrsepp>]
 
-Removes a package from the system. Without the option
-B<--final> the package does not get removed for real. It just
-gets earmarked, so that people who still use the package get a warning,
-telling them that the package is going to be removed soon.
+Removes a package from the system. Without the option B<--final> 
+the package does not get removed for real. It just gets earmarked, 
+so that people who still use the package get a warning, telling them 
+that the package is going to be removed soon. 
+
 The option B<--final> removes the package for real.
 
-The option B<--usrsepp> targets the cleaning towards /usr/sepp/{bin,man,html} only.
+The option B<--usrsepp> targets the cleaning towards 
+/usr/sepp/{bin,man,html} only.
 
 =item B<mirror> I<package> [B<--force>]
 
 Create a local copy of a package. This is to increase reliability and
 performance. Use the B<--force> option to get your mirror updated regardless of the
-state of the applications CHANGE log and PackList.
+state of the applications CHANGES log and PackList.
 
 =item B<mirrorupdate>
 
@@ -547,7 +550,7 @@ sub ScanForBins ($);        # find binaries associated with a package
 sub FindBin ( $ );          # is a binary with the same name already on the sys
 sub FindMan ( $ );          # is a manpage with the same name already on the sys
 sub CheckDir ( $ );         # is the dir existing and writable
-sub CheckAccessDir ( $ );         # is the dir existing and writable
+sub CheckAccessDir ( $ );   # is the dir existing and writable
 sub Info ( $ );             # Info ...
 sub Tip ( $ );              # Tip ...
 sub Error ( @ );            # Report Error
@@ -561,7 +564,7 @@ sub GetLocalPath ( $ );     # get real path to package for shareing ...
 sub MakeStub ( $ );         # create the little perl script we are pointing the slinks to
 sub StubLink ($$$$);        # link the stubs into the bin tree
 sub SymLink ($$$$);         # make a direct link for interpreter languages ...
-sub ManLink ($$$$$);         # link the manpages
+sub ManLink ($$$$$);        # link the manpages
 sub SlurpFile ( $ );        # read an array and return the pointer
 sub DumpFile ($$);          # write file to disk, given a name and a pointer to an array
 sub SaneShell ($);          # start /bin/tcsh as a sane build environment
@@ -618,12 +621,11 @@ sub Main ()
     $$CONF{'preferred operating system'}[0] = $platform;
   }
   
-  if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}})
-    {
-      #set up the osx module with the apropriate parameters
-      require osx_stubber;
-      osx_stubber::init(\%DIR,\&Error,\&Warning,\&Info,\&ReadMETA,\&ReadConf);
-    }
+  if(grep { m/^darwin/i } @{$CONF->{'preferred operating system'}}) {
+    #set up the osx module with the apropriate parameters
+    require osx_stubber;
+    osx_stubber::init(\%DIR,\&Error,\&Warning,\&Info,\&ReadMETA,\&ReadConf);
+  }
 
   SEPP::OSDetector::push_conf($CONF);
 
@@ -1892,7 +1894,7 @@ USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
        seppadm webbuild [--localonly] [--all]
        seppadm prefix_bundle package pathname...
 
-       Release: 1.5.1
+       Release: 1.5.2
 
 ";
 	 exit 0;
@@ -2082,6 +2084,7 @@ sub FindFreePartition (){
     my $curdisk;
     my $selfree = 0;
     for $curdisk (@{$$CONF{'sepp disks'}}) {
+        next if ( -f "$curdisk/SKIP_FREE_DISK" ); 
         my $curfree;
         if ($curdisk =~ m|^/afs/| && $PROG{fs}) {
             my $curused;
