@@ -143,7 +143,7 @@ function prepare () {
          [ -d $SRCDIR ] || gtar zxf $2;;
      *.tar.xz)
          SRCDIR=${SRCDIR:-$WORKDIR/`basename $2 .tar.xz`}
-         [ -d $SRCDIR ] || xzdec $2 | gtar xf -;;
+         [ -d $SRCDIR ] || xz --decompress --stdout $2 | gtar xf -;;
      *.tgz)
          SRCDIR=${SRCDIR:-$WORKDIR/`basename $2 .tgz`}
          [ -d $SRCDIR ] || gtar zxf $2;;
