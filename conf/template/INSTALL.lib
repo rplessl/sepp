@@ -141,6 +141,9 @@ function prepare () {
      *.tar.gz)
          SRCDIR=${SRCDIR:-$WORKDIR/`basename $2 .tar.gz`}
          [ -d $SRCDIR ] || gtar zxf $2;;
+     *.tar.xz)
+         SRCDIR=${SRCDIR:-$WORKDIR/`basename $2 .tar.xz`}
+         [ -d $SRCDIR ] || xz -d $2 | gtar xf -;;
      *.tgz)
          SRCDIR=${SRCDIR:-$WORKDIR/`basename $2 .tgz`}
          [ -d $SRCDIR ] || gtar zxf $2;;
