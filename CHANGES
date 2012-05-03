@@ -1,3 +1,14 @@
+2009-10-14
+----------
+* released 1.5.2
+* added skip partition in determination of the best matching
+  partition with free space. Skipping will be done if a file
+  SKIP_FREE_DISK exists.   
+* added ExistENV routine in SEPP::SeppStart
+  (patch by Andreas Romer <andreas.romer@espros.ch>)
+* added Ubunty Hardy, Debian Lenny in SEPP::OSDetector
+
+
 2008-12-02
 ----------
 * added SuSE SLES in OSDetector config file

@@ -231,7 +231,7 @@ sub AppOpen
 	my $rv=$?;
 	my $exitval = ($rv >> 8);
 
-	system $logger,'-p','local4.info','-t', 
+	system $logger,'-p','local3.info','-t', 
 	  "$user\@$host.".$CF::seppdomain, 
 	    "$pack:$BundlePath:".(time - $starttime).":".$rv;
 
@@ -251,7 +251,7 @@ sub AppOpen
 	my $rv=$?;
 	my $exitval = ($rv >> 8);
 
-	system $logger,'-p','local4.info','-t', 
+	system $logger,'-p','local3.info','-t', 
 	  "$user\@$host.".$CF::seppdomain, 
 	    "$pack:$BundlePath:".(time - $starttime).":".$rv;
 
@@ -275,7 +275,7 @@ sub AppOpenFinder
     $bundle="$PackDir/$BundlePath"
       unless $bundle;
 
-    system $logger,,'-p','local4.info',
+    system $logger,,'-p','local3.info',
       '-t',"$user\@$host.$CF::seppdomain","$pack:$BundlePath:?:?";
     
     system "/usr/bin/open",$bundle,@ARGV;
@@ -306,7 +306,7 @@ sub AppOpenProxy
     my $rv=$?;
     my $exitval = ($rv >> 8);
 
-    system $logger,'-p','local4.info','-t', 
+    system $logger,'-p','local3.info','-t', 
 	  "$user\@$host.".$CF::seppdomain, 
 	    "$pack:$BundlePath:".(time - $starttime).":".$rv;
 

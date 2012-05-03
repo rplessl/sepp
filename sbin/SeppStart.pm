@@ -227,7 +227,7 @@ sub AppRun ($) {
   system "$bin", @ARGV;
   my $exitval = ($? >> 8);
   my $user = $ENV{LOGNAME} || $ENV{USER} || "uid:$>";
-  system $logger,'-p','local4.info','-t', 
+  system $logger,'-p','local3.info','-t', 
   "$user\@$host.".$CF::seppdomain, 
   "$pack:$bin:".(time - $starttime).":".$?;
   exit $exitval unless $exitval == 0;
@@ -246,7 +246,7 @@ sub AppExec ($) {
   $bin = FindBin $path,$bin,$maint,$vers;
   DebugCheck $pack,$bin,$path;
   my $user = $ENV{LOGNAME} || $ENV{USER} || "uid:$>";
-  system $logger,,'-p','local4.info',
+  system $logger,,'-p','local3.info',
   '-t',"$user\@$host.$CF::seppdomain","$pack:$bin:?:?";
   exec  "$bin", @ARGV;
 }
