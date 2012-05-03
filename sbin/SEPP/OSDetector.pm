@@ -14,7 +14,7 @@ package SEPP::OSDetector;
 use strict;
 use vars qw($CONF $VERSION);
 
-$VERSION = 0.11;
+$VERSION = '0.12';
 
 # this is used to push the config from seppadm to this module
 sub get_conf {
@@ -80,75 +80,104 @@ sub parse_config ($)
     my $cfgfile = shift;
     my $parser  = Config::Grammar->new(
         {
-            _sections  => [qw(solaris linux Compatibility)],
-            _mandatory => [qw(Compatibility)],
-            solaris    => {
-                _doc => <<DOC,
-DOC
+            _sections  => [qw(General Solaris Linux Compatibility ImplEnvSettings ExplEnvSettings)],
+            _mandatory => [qw(General Compatibility)],
+            General => {
+               _doc => 'Global configuration settings for OSDetector'
+               _vars => [ qw(compat_libs_store) ],
+               compat_libs_store => {
+                  _doc => 'path to general compatibilty libraries',
+                  _re  => ['/\S+/'],
+               },
+            }
+            Solaris    => {
+                _doc => 'All settings for SUN Solaris OS',
                 _sections  => [qw(CPU Distribution)],
                 _mandatory => [qw(CPU Distribution)],
                 CPU        => {
-                    _doc => <<DOC,
-DOC
+                    _doc => 'CPU type as given by uname -p'
                     _sections     => ["/$RE_MATCH/"],
                     _recursive    => ["/$RE_MATCH/"],
                     "/$RE_MATCH/" => {
                         _text => {},
-                        _doc  => <<DOC,
-DOC
+                        _doc  => 'sub CPU type as given by uname -i',
                     },
                 },
                 Distribution => {
-                    _doc => <<DOC,
-DOC
+                    _doc => 'Distribution as given by uname -r',
                     _sections     => ["/$RE_MATCH/"],
                     _recursive    => ["/$RE_MATCH/"],
                     "/$RE_MATCH/" => {
                         _text => {},
-                        _doc  => <<DOC,
-DOC
+                        _doc  => ''
                     },
                 },
             },
-            linux => {
-                _doc => <<DOC,
-DOC
+            Linux => {
+                _doc => 'All settings for Linux OSes',
                 _sections  => [qw(CPU Distribution)],
                 _mandatory => [qw(CPU Distribution)],
                 CPU        => {
-                    _doc => <<DOC,
-DOC
+                    _doc => 'CPU type as given by uname -m'
                     _sections     => ["/$RE_MATCH/"],
                     _recursive    => ["/$RE_MATCH/"],
                     "/$RE_MATCH/" => {
                         _text => {},
-                        _doc  => <<DOC,
-DOC
+                        _doc  => 'sub CPU type as given by uname -m',
                     },
                 },
                 Distribution => {
-                    _doc => <<DOC,
-DOC
+                    _doc => 'Linux distribution based on evaled code (like lsb_release)'
                     _sections     => ["/$RE_MATCH/"],
                     _recursive    => ["/$RE_MATCH/"],
                     "/$RE_MATCH/" => {
                         _text => {},
-                        _doc  => <<DOC,
-DOC
+                        _doc  => 'Linux distribution based on evaled code (like lsb_release)'
                     },
                 },
             },
             Compatibility => {
-                _doc => <<DOC,
-DOC
+                _doc => 'Compatibilty list for the running OS (e.g. running RHEL4 applications on Ubuntu 8.04). The key element is the OS identifier (CPU-OS-DISTRO)',
                 _sections     => ["/$RE_MATCH/"],
                 "/$RE_MATCH/" => {
                     _text => {},
-                    _doc  => <<DOC,
-DOC
+                    _doc  => '',
                 },
             },
-        }
+            ImplEnvSettings => {
+                _doc => 'Implicit environment settings with two subcases: implicit settings for the running OS and settings which are applied if a compination of running OS and origin OS matches. The conditions are evaled and can be rather complex.',
+                _sections     => ["/$RE_MATCH/"],
+                _recursive    => ["/$RE_MATCH/"],
+                "/$RE_MATCH/" => {
+                    _sections  => [qw(condition code)],
+                    _mandatory => [qw(condition code)],
+                    condition => {
+                       _text => {},
+                       _doc  => '',
+                    },
+                    code => {
+                       _text => {},
+                       _doc  => '',
+                    },
+                },
+            },
+            ExplEnvSettings => {
+                _doc => 'Explicit environment settings with two subcases: explicit settings for the running OS and settings which are applied if a compination of running OS and origin OS matches. The conditions are evaled and can be rather complex.',
+                _sections     => ["/$RE_MATCH/"],
+                _recursive    => ["/$RE_MATCH/"],
+                "/$RE_MATCH/" => {
+                    _sections  => [qw(condition code)],
+                    _mandatory => [qw(condition code)],
+                    condition => {
+                       _text => {},
+                       _doc  => '',
+                    },
+                    code => {
+                       _text => {},
+                       _doc  => '',
+                    },
+                },
+            },
     );
 
     my $cfg = $parser->parse($cfgfile)
@@ -314,10 +343,12 @@ sub get_existing_execdir($;%)
     }
     my %DIR = @_ || %DEFAULTDIR;
     my @COMPATS = get_compatible_os( %DIR );
-    return evaluate_dirs($PackDir, @COMPATS);
+    my $RunningOS = $COMPATS[0];
+    my $OriginOS  = evaluate_dirs($PackDir, @COMPATS);
+    return [$OriginOS, $RunningOS];
 }
 
-sub get_all_platform_triplets(%) 
+sub get_all_platform_triplets(%)
 {
     my %DIR = @_;
     if (not exists $DIR{'sepp'}) { %DIR = %DEFAULTDIR; };
@@ -339,7 +370,7 @@ sub get_all_platform_triplets(%)
                     unshift @valid_distro, $distrosubfamily;
                 }
            }
-        }   
+        }
 
         my @valid_cpus   = evaluate_cpu($cfg);
 
@@ -350,6 +381,31 @@ sub get_all_platform_triplets(%)
         }
     }
     return (%triplets);
+}
+
+sub evaluate_ImplEnvSettings ($)
+{
+    my $cfg = shift;
+
+    my @valid_distro;
+    my @distros = keys %{$cfg->{$OS}->{'Distribution'}};
+
+    foreach my $distrofamily (@distros){
+        if (grep { $_ =~ /_text/ } keys %{$cfg->{$OS}->{'Distribution'}->{$distrofamily}}) {
+            if ((eval ($cfg->{$OS}->{'Distribution'}->{$distrofamily}{_text})) eq 'true') {
+                unshift @valid_distro, $distrofamily;
+            }
+        }
+        my @distrosubfamilies = grep { $_ !~ /_text/ } keys %{$cfg->{$OS}->{'Distribution'}->{$distrofamily}};
+        foreach my $distrosubfamily (@distrosubfamilies){
+            if (grep { $_ =~ /_text/ } keys %{$cfg->{$OS}->{'Distribution'}->{$distrofamily}->{$distrosubfamily}}) {
+                if ((eval ($cfg->{$OS}->{'Distribution'}->{$distrofamily}->{$distrosubfamily}{_text})) eq 'true') {
+                    unshift @valid_distro, $distrosubfamily;
+                }
+            }
+        }
+    }
+    return @valid_distro;
 }
 
 __END__
@@ -388,22 +444,27 @@ and creating smart OS detection SEPP/start.pl wrappers.
 
 Returns the best match for I<$EPREFIX> for the running OS. That
 means if there is a SEPP Package with the following directory
-structure (e.g. samba-3.0.25-mo):
+structure (e.g. subversion-1.6.4-rp):
 
-`--SEPP
-`--amd64-debian-linux3.1
-`--i686-debian-linux3.1
-`--include
-`--man
-`--share
-`--.swat
-`--template
-`--var
+.
+|-- SEPP
+|-- amd64-linux-debian3.1
+|-- amd64-linux-redhat4
+|-- amd64-linux-ubuntu8.04
+|-- build-1
+|-- docs
+|-- ia32-linux-debian3.1
+|-- include
+|-- lib
+|-- man
+`-- share
 
 the result of this function will be
 
- amd64-debian-linux3.1  on a amd64 debian system (64bit)
- i686-debian-linux3.1   on a i686 debian system  (32bit)
+ amd64-linux-debian3.1   on a amd64 debian sarge system (64bit)
+ amd64-linux-redhat4     on a amd64 RHEL 4 system       (64bit)
+ amd64-linux-ubuntu8.04  on a amd64 ubuntu hardy system (64bit)
+ ia32-linux-debian3.1    on a ia32 debian sarge system  (32bit)
 
 =item B<SEPP::OSDetector::get_compatible_os( [ %DIR ] )>
 
@@ -414,17 +475,23 @@ the result of this function will be
 ]
 
 Returns a perl array with OS compatible I<$EPREFIX>. 
-E.g. on a amd64 system running Ubuntu 6.10 the result will be
+E.g. on a amd64 system running Ubuntu 8.04 the result will be
 
-  amd64-linux-ubuntu6.10
-  ia32-linux-ubuntu6.10
-  amd64-linux-ubuntu6.06
-  ia32-linux-ubuntu6.06
-  amd64-debian-linux3.1
-  i686-debian-linux3.1
+   amd64-linux-ubuntu8.04 
+   ia32-linux-ubuntu8.04
+   amd64-linux-ubuntu7.04
+   ia32-linux-ubuntu7.04 
+   amd64-linux-ubuntu6.10
+   ia32-linux-ubuntu6.10 
+   amd64-linux-ubuntu6.06
+   ia32-linux-ubuntu6.06
+   amd64-linux-debian3.1
+   ia32-linux-debian3.1
+   amd64-debian-linux3.1
+   i686-debian-linux3.1
 
 that means, all this compiled versions are runnable on the
-Ubuntu 6.10 system (i.e. GLIBC version is not newer). The 
+Ubuntu 8.04 system (i.e. GLIBC version is not newer). The 
 first entry in the array is the best match, the last the
 worst.
 
@@ -514,7 +581,7 @@ Example of OSDetector.conf
    {
       if ( -e '/etc/debian_version'&& ! -e '/etc/lsb-release' ) {
          my $debian_version = `cat /etc/debian_version`;
-         if ($debian_version =~ /4.0/) { return 'true'; } else { return 'false'; }
+         if ($debian_version =~ /4\.0/) { return 'true'; } else { return 'false'; }
       } else { return 'false'; }
    }
    ++ ubuntu
@@ -529,7 +596,7 @@ Example of OSDetector.conf
       if ( -e '/etc/lsb-release' ) {
          my $lsbrelease = `/bin/cat /etc/lsb-release`;
          if ($lsbrelease =~ /Ubuntu/) {
-            if ($lsbrelease =~ /6.06/) {
+            if ($lsbrelease =~ /6\.06/) {
               return 'true';
             } else { return 'false'; }
          } else { return 'false'; }
@@ -537,20 +604,25 @@ Example of OSDetector.conf
    }
    ...
 
-
    *** Compatibility ***
-   + amd64-linux-ubuntu7.04
-   ia32-linux-ubuntu7.04
+   + amd64-linux-ubuntu8.04
+   ia32-linux-ubuntu8.04
+   amd64-linux-ubuntu7.04
+   ia32-linux-ubuntu7.04 
    amd64-linux-ubuntu6.10
-   ia32-linux-ubuntu6.10
+   ia32-linux-ubuntu6.10 
    amd64-linux-ubuntu6.06
-   amd64-debian-linux3.1
    ia32-linux-ubuntu6.06
+   amd64-linux-debian3.1
+   ia32-linux-debian3.1
+   amd64-debian-linux3.1
    i686-debian-linux3.1
 
-   + ia32-linux-ubuntu7.04
+   + ia32-linux-ubuntu8.04
+   ia32-linux-ubuntu7.04
    ia32-linux-ubuntu6.10
    ia32-linux-ubuntu6.06
+   ia32-linux-debian3.1
    i686-debian-linux3.1
    ...
 
@@ -561,7 +633,9 @@ Example of OSDetector.conf
 
 =head1 BUGS
 
-No knowns till now ... :-)
+No knowns are listed in the op-sepp trac:
+
+  http://oss.oetiker.ch/op-sepp/report/1
 
 =head1 AUTHOR
 

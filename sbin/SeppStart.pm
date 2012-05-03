@@ -19,7 +19,7 @@ B<$Pack>, B<$PackDir>, B<$PackVar>
 =head1 DESCRIPTION
 
 This module provides a number of functions for creating SEPP/start.pl
-wrappers. 
+wrappers.
 
 =over 10
 
@@ -40,24 +40,24 @@ Returns the value or undef iff not defined.
 =item B<AppRun> I<BinaryPath>
 
 Run the application specified through the contents of $0. The argument
-must point to the directory where the application binaries are installed inside the pack. This
-command should be used at the end of every start.pl script to launch
-the actual application. It will also write an entry to the sepp syslog facility
-local_4 when the application terminates. Giving details on runtime and exitcode
-of the application.
+must point to the directory where the application binaries are installed
+inside the pack. This command should be used at the end of every start.pl
+script to launch the actual application. It will also write an entry to the
+sepp syslog facility local_4 when the application terminates. Giving details
+on runtime and exitcode of the application.
 
 The return value of this function is the exit value of the called binary
 
 =item B<AppExec> I<BinaryPath>
 
 Works like B<AppRun>, but the application is started via exec.
-This takes less memory, but the log entry will neither contain the 
+This takes less memory, but the log entry will neither contain the
 runtime nor the exitcode of the application.
 
 =item B<$Pack>, B<$PackDir>, B<$PackVar>
 
 These three variables can be used in the start.pl file to
-to make the wrappers easily portable ... 
+to make the wrappers easily portable ...
 
 =back
 
@@ -89,10 +89,10 @@ BEGIN{
   $PackVar="/usr/sepp/var/$Pack";
 
   # get system and user config ... this makes some information available
-  # which is quite hard to come by otherwhise .... 
-  
+  # which is quite hard to come by otherwhise ....
+
   # so to access configuration variables you have to
-  # use $CF::maildomain  or something like this ... 
+  # use $CF::maildomain  or something like this ...
 
   do {
     package CF;
@@ -187,7 +187,7 @@ Package:    $pack
 print "Env:        
 ";
 
-map {printf "            %10s = '%s'\n", $_, $ENV{$_};} keys %ENV;
+map {printf "    %15s = '%s'\n", $_, $ENV{$_};} keys %ENV;
 	exit 1;
 }
 

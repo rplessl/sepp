@@ -2411,7 +2411,9 @@ BEGIN{\$Pack='$pack';
 unshift \@INC, '$DIR{'sepp'}/sbin';}
 use SeppStart;
 use SEPP::OSDetector;
-\$OsName = SEPP::OSDetector->get_existing_execdir( \$PackDir );
+(\$OriginOS, \$RunningOS) = SEPP::OSDetector->get_existing_execdir( \$PackDir );
+\$OsName = $OriginOS;
+evaluate_ImplEnvSettings(\$OriginOS, \$RunningOS);
 \$s = "\$PackDir/SEPP/start.pl";
 die "SEPP Error: Can't access \$s\\n" unless -x \$s;
 do \$s;
