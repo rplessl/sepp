@@ -15,7 +15,7 @@ my $key = $ARGV[0];
 
 ##############################################################
 # if there is a  file called
-# /scratch/pack/$key/mount and it belongs to user >#>user_name<#<
+# /scratch/pack/$key/mount and it belongs to user sepp
 # we mount this into 
 # /usr/pack/$key
 # this is great for building sepp packages
@@ -31,7 +31,7 @@ if (open X, "/etc/mtab"){
 }
 close X;
 if ( -r $build 
-        and (stat $build)[4] == (getpwnam '>#>user_name<#<')[2] ){
+        and (stat $build)[4] == (getpwnam 'sepp')[2] ){
 	if($^O eq 'linux') {
 		print "-fstype=none,bind :/scratch/pack/$key\n";
 	}
@@ -43,20 +43,24 @@ if ( -r $build
 ##############################################################
 # back to our regular program
 ##############################################################
-open X, "/usr/sepp/conf/autosepp_indirect" or exit 1;
-while (<X>){
-        chomp;
-        last if /^\Q$key\E\s/mo;
-        undef $_;
-}
-exit 1 unless $_;
-chomp;
-my $target=(split /\s+/)[1];
-chomp $target;
-# kill host(x) 
-$target =~ s/\(\d+\)//;
+open my $X, "/usr/sepp/conf/autosepp_indirect" or exit 1;
 
-$local=(split /:/, $target)[1];
+my $target;
+
+while (<$X>){
+        chomp;
+        my ($l1,$l2) = split;
+        if ($l1 eq $key){
+                $target = $l2;
+        }
+}
+
+die "Can't find $key in autosepp_indirect map\n" unless $target;
+
+# kill host(x) 
+$target =~ s/\(\d+\)$//;
+
+my $local=(split /:/, $target)[1];
 $local =~ s/&$/$key/;
 if ( -d $local){
 	if($^O eq 'linux') {
