@@ -175,11 +175,18 @@ sub RemoveAlert ($){
 sub DebugCheck ($$$) {
 	my($pack,$bin,$path) = @_;
 	return unless grep {$_ eq '--seppdebug'} @ARGV;
+
+        my $df        = '/bin/df';
+        my $grep      = '/bin/grep';
+        my $awk       = '/usr/bin/awk';
+        my $partition = `$df -P $path | $grep -v Mounted | $awk '{print \$1}'`;
+
 	print STDERR "
 SEPP Debug Report for $0
 
 Path:       $path/$bin
 Package:    $pack
+Partition:  $partition
 
 ";
 	exit 1 unless grep {$_ eq '--seppenv'} @ARGV;
