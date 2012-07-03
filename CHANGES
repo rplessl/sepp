@@ -5,6 +5,13 @@
 * added OS Compats for Ubuntu till 12.04
 * change log infrastructure from local4 to local3 (dealing
   with esxi logs which are hardcoded to local4)
+* added partition in debug output where package lives
+  (trac ticket #7)
+* fixed pod documentation about --seppdebug and --seppenv  
+  (trac ticket #9)
+* fixed OSDectector.conf and example in OSDetector.pm. Remark
+  to full config file (trac ticket #10). 
+  Updated Pod Documentation.  
 
 2009-10-14
 ----------

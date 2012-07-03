@@ -514,7 +514,7 @@ Example of OSDetector.conf
    {
       if ( -e '/etc/debian_version'&& ! -e '/etc/lsb-release' ) {
          my $debian_version = `cat /etc/debian_version`;
-         if ($debian_version =~ /4.0/) { return 'true'; } else { return 'false'; }
+         if ($debian_version =~ /4\.0/) { return 'true'; } else { return 'false'; }
       } else { return 'false'; }
    }
    ++ ubuntu
@@ -529,7 +529,18 @@ Example of OSDetector.conf
       if ( -e '/etc/lsb-release' ) {
          my $lsbrelease = `/bin/cat /etc/lsb-release`;
          if ($lsbrelease =~ /Ubuntu/) {
-            if ($lsbrelease =~ /6.06/) {
+            if ($lsbrelease =~ /6\.06/) {
+              return 'true';
+            } else { return 'false'; }
+         } else { return 'false'; }
+      } else { return 'false'; }
+   }
+   +++ ubuntu7.04
+   {
+      if ( -e '/etc/lsb-release' ) {
+         my $lsbrelease = `/bin/cat /etc/lsb-release`;
+         if ($lsbrelease =~ /Ubuntu/) {
+            if ($lsbrelease =~ /7\.04/) {
               return 'true';
             } else { return 'false'; }
          } else { return 'false'; }
@@ -554,6 +565,8 @@ Example of OSDetector.conf
    i686-debian-linux3.1
    ...
 
+
+A currently used example file is in your checkout at conf/OSDetector.conf
 
 =over 10
 
