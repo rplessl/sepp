@@ -16,6 +16,13 @@ B<AppExec> I<BinaryPath>
 
 B<$Pack>, B<$PackDir>, B<$PackVar>
 
+
+At startup:
+
+B<--seppdebug>
+
+B<--seppenv>
+
 =head1 DESCRIPTION
 
 This module provides a number of functions for creating SEPP/start.pl
@@ -58,6 +65,24 @@ runtime nor the exitcode of the application.
 
 These three variables can be used in the start.pl file to
 to make the wrappers easily portable ... 
+
+=item B<--seppdebug>
+
+The optional parameter B<--seppdebug> shows the content of the runtime variables
+B<$PackDir>, B<$Pack> and also the phyisical partition, where the SEPP package and
+the call SEPP binary lives. 
+
+After showing the runtime variables the startup process of AppRun or
+AppExec will be interrupted.
+
+=item B<--seppenv>                              
+
+The optional parameter B<--seppenv> in combination with B<--seppdebug> shows the 
+runtime environment for the binary startup. The binary which is linked per default
+at /usr/sepp/bin. 
+
+After showing the runtime and enviroment variables the startup process of AppRun 
+or AppExec will be interrupted.
 
 =back
 
