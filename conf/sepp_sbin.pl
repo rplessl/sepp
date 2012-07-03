@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/sepp/sbin/perl -w
 #
 # if the home is available on an already mounted directory, bind it instead
 # of wasting another mountpoint ... 
@@ -49,7 +49,7 @@ while (<X>){
         last if /^\Q$key\E\s/mo;
         undef $_;
 }
-#exit 1 unless $_;
+exit 1 unless $_;
 chomp;
 my $target=(split /\s+/)[1];
 chomp $target;

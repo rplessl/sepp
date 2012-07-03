@@ -1,4 +1,4 @@
-#!/usr/sepp/sbin/perl -w
+#!/usr/bin/perl -w
 #
 # if the home is available on an already mounted directory, bind it instead
 # of wasting another mountpoint ... 
@@ -43,20 +43,24 @@ if ( -r $build
 ##############################################################
 # back to our regular program
 ##############################################################
-open X, "/usr/sepp/conf/autosepp_indirect" or exit 1;
-while (<X>){
-        chomp;
-        last if /^\Q$key\E\s/mo;
-        undef $_;
-}
-exit 1 unless $_;
-chomp;
-my $target=(split /\s+/)[1];
-chomp $target;
-# kill host(x) 
-$target =~ s/\(\d+\)//;
+open my $X, "/usr/sepp/conf/autosepp_indirect" or exit 1;
 
-$local=(split /:/, $target)[1];
+my $target;
+
+while (<$X>){
+        chomp;
+        my ($l1,$l2) = split;
+        if ($l1 eq $key){
+                $target = $l2;
+        }
+}
+
+die "Can't find $key in autosepp_indirect map\n" unless $target;
+
+# kill host(x) 
+$target =~ s/\(\d+\)$//;
+
+my $local=(split /:/, $target)[1];
 $local =~ s/&$/$key/;
 if ( -d $local){
 	if($^O eq 'linux') {

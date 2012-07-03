@@ -727,9 +727,14 @@ sub Prepare ()
     StoreAutomount($auto);
 
     Info "Added $packname to $DIR{'sepp'}/conf/autosepp_indirect";
-    Error "Automounting $packname on $DIR{'pack'} failed.
-       Check your automounter setup."
-	unless WritableDirTest "$DIR{'pack'}/$packname/.";
+
+    for (1..30){
+        last if WritableDirTest "$DIR{'pack'}/$packname/.";
+        Info "Waiting for $DIR{'pack'}/$packname to appear";
+        sleep 1;
+    }
+    Error "Failed to mount $DIR{'pack'}/$packname. Check automount setup."
+        unless WritableDirTest "$DIR{'pack'}/$packname/.";
 
     system @RSYNC, "$DIR{'sepp'}/conf/template/", "$DIR{'pack'}/$packname/SEPP";
 

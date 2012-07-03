@@ -602,6 +602,17 @@ Example of OSDetector.conf
          } else { return 'false'; }
       } else { return 'false'; }
    }
+   +++ ubuntu7.04
+   {
+      if ( -e '/etc/lsb-release' ) {
+         my $lsbrelease = `/bin/cat /etc/lsb-release`;
+         if ($lsbrelease =~ /Ubuntu/) {
+            if ($lsbrelease =~ /7\.04/) {
+              return 'true';
+            } else { return 'false'; }
+         } else { return 'false'; }
+      } else { return 'false'; }
+   }
    ...
 
    *** Compatibility ***
@@ -626,6 +637,8 @@ Example of OSDetector.conf
    i686-debian-linux3.1
    ...
 
+
+A currently used example file is in your checkout at conf/OSDetector.conf
 
 =over 10
 
