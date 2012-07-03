@@ -1899,7 +1899,7 @@ USAGE: seppadm prepare [pathname/]package [--noshell | --shellonly]
        seppadm webbuild [--localonly] [--all]
        seppadm prefix_bundle package pathname...
 
-       Release: 1.5.2
+       Release: 1.5.3
 
 ";
 	 exit 0;

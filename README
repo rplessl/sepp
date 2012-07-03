@@ -24,7 +24,7 @@ by Roman Plessl <roman.plessl@oetiker.ch> (2008-07-28)
   as the SEPP user)
 
   % cd /usr/sepp
-  % wget http://oss.oetiker.ch/op-sepp/pub/sepp-1.5.2.tar.bz2 -O - | bunzip2 | tar xf -
+  % wget http://oss.oetiker.ch/op-sepp/pub/sepp-1.5.3.tar.bz2 -O - | bunzip2 | tar xf -
 
 * Add the symlinks to perl and rsync by just add symbolic links:
 
