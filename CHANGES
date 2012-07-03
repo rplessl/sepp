@@ -1,6 +1,9 @@
 2012-xx-xx
 ----------
-* releases as 1.5.x
+
+2012-07-03
+----------
+* released 1.5.3
 * added upstart autofs helper scripts
 * added OS Compats for Ubuntu till 12.04
 * change log infrastructure from local4 to local3 (dealing
