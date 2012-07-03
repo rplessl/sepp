@@ -1,4 +1,4 @@
-#!/usr/sepp/sbin/perl -w
+#!/usr/bin/perl -w
 #
 # if the home is available on an already mounted directory, bind it instead
 # of wasting another mountpoint ... 
