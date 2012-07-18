@@ -937,7 +937,7 @@ sub Install ()
 		ManLink $pack,"$path/$_","$baseman-$packversion-$packmaint.$manext",$default,$forced;
 	    }
 	}
-	closedir BINDIR;
+	closedir MANDIR;
     }
 
     Info "Generated $DIR{'sepp'}/man links";
