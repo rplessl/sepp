@@ -728,10 +728,11 @@ sub Prepare ()
 
     Info "Added $packname to $DIR{'sepp'}/conf/autosepp_indirect";
 
-    for (1..30){
+    for (1..20){        
+        # within 60 seconds all negative caching should be over
         last if WritableDirTest "$DIR{'pack'}/$packname/.";
         Info "Waiting for $DIR{'pack'}/$packname to appear";
-        sleep 1;
+        sleep 5;
     }
     Error "Failed to mount $DIR{'pack'}/$packname. Check automount setup."
         unless WritableDirTest "$DIR{'pack'}/$packname/.";
