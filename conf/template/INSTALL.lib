@@ -126,6 +126,22 @@ function debpatch () {
   rm $2
 }
 
+function debchanges () {
+  cd $WORKDIR
+  echo "**** doing $2 ****"
+  [ -f $2 ] || wget   --tries=0 --random-wait --passive-ftp $1/$2
+  gunzip -c $2 > debchanges.tar
+  rm $2  
+}
+
+function cleanpatches() {
+  cd $WORKDIR
+  echo "**** cleanup patches and debian patches ****"
+  rm -f $WORKDIR/patch
+  rm -f $WORKDIR/patch-deb
+  rm -f $WORKDIR/debchanges.tar
+}
+
 function prepare () {
  cd $WORKDIR
  if [ ! -f $2.ok ]
@@ -180,6 +196,19 @@ function prepare () {
 		done
 	fi
 	rm $WORKDIR/patch-deb
+   fi
+   if [ -f $WORKDIR/debchanges.tar ]; then
+        tar xf $WORKDIR/debchanges.tar
+        if [ -d debian/patches ]; then  
+                PATCHES=`cd debian/patches && ls -1`
+                for p in $PATCHES; do
+                        [ "$p" = "00list" ] && continue
+           	        [ -f debian/patches/$p ] || continue
+                        echo "### applying $p:"
+                        gpatch -p1 -l < debian/patches/$p
+                done
+        fi
+        rm $WORKDIR/debchanges.tar
    fi
  else
    echo "**** skipping $2 ****"

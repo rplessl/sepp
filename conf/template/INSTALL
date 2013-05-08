@@ -55,6 +55,12 @@ PATCH
 # for debian patches *.diff.gz
 debpatch http://security.ubuntu.com/ubuntu/pool/main/z/zip zip_2.30-6ubuntu0.1.diff.gz
 
+# for debian change *.tar.gz
+debchanges http://archive.ubuntu.com/ubuntu/pool/universe/q/qhull qhull_2009.1-3ubuntu1.debian.tar.gz
+
+# clean patch environment (removes $WORKDIR/patch, $WORKDIR/deb-patch, $WORKDIR/debchanges.tar)
+cleanpatches
+
 ## build software from source, using configure, make and make install
 simplebuild  http://ftp.gnu.org/gnu/${PROD} ${PROD}-${VERSION}.tar.gz \
     --with-fun-option \
